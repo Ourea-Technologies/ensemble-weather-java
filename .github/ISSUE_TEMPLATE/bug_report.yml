@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: Bug report
+description: Something in the Java SDK does not work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. **Never paste an API key**
+        here: the SDK never prints it, so its own output is safe to share.
+  - type: input
+    id: version
+    attributes:
+      label: SDK version
+      description: '`EnsembleWeatherClient.VERSION`, or the version in your build file.'
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Java version and OS
+      placeholder: Temurin 21.0.6 on Ubuntu 24.04
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: A minimal snippet that shows it
+      render: java
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: Request id
+      description: '`e.requestId()` or `response.metadata().requestId()`, if there is one. It lets us find the request in our logs.'

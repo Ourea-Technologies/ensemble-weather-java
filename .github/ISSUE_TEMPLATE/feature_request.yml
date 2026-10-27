@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: Feature request
+description: Ask for something the SDK (or the API) does not do yet.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Start with the problem; the best API for it often
+        follows. The API's behaviour lives in ensemble-weather-spec, shared by
+        every Ourea SDK, so a request that needs a server change may move there.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem you are solving
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The API you would like
+      description: How would the call look in your code?
+      render: java
+  - type: dropdown
+    id: server
+    attributes:
+      label: Does it need a change to the API itself?
+      options:
+        - I don't know
+        - No, the SDK alone can do it
+        - Yes, the server would need to compute or serve something new
+    validations:
+      required: true

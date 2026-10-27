@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: BSD-2-Clause
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and show and tell
+    url: https://github.com/Ourea-Technologies/ensemble-weather-java/discussions
+    about: Ask a question (Q&A), suggest an idea, or share what you built.
+  - name: Documentation
+    url: https://docs.oureawx.com/java
+    about: Guides and concepts for the Java SDK.
+  - name: Report a vulnerability
+    url: https://github.com/Ourea-Technologies/ensemble-weather-java/security/advisories/new
+    about: Report security problems privately, never as a public issue.

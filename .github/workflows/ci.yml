@@ -1,0 +1,96 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Format, lint, types, SpotBugs, docs, package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: google-java-format (check mode)
+        run: ./gradlew formatCheck
+      - name: Error Prone + NullAway, -Xlint:all -Werror, doclint (main, tests, examples)
+        run: ./gradlew compileJava compileTestJava compileExamplesJava
+      - name: SpotBugs + Find Security Bugs
+        run: ./gradlew spotbugsMain
+      - name: Javadoc (doclint, warnings are errors)
+        run: ./gradlew javadoc
+      - name: Every runtime dependency is justified in CONTRIBUTING.md
+        run: ./gradlew checkDependencies
+      - name: spec/ matches spec/VERSION
+        run: scripts/sync-spec --check
+      - name: Jar, sources jar and javadoc jar
+        run: ./gradlew assemble
+
+  test:
+    name: Unit tests and vectors (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [11, 17, 21, 25]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          # The matrix JDK runs the tests; JDK 25 runs Gradle and compiles.
+          java-version: |
+            ${{ matrix.java }}
+            25
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Unit tests, the 43 shared vectors and spec drift
+        env:
+          TEST_JDK: ${{ matrix.java }}
+        run: ./gradlew test jacocoTestReport -PtestJdk="$TEST_JDK"
+      - name: Coverage report
+        if: matrix.java == 25
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: build/reports/jacoco/test
+          retention-days: 7
+
+  examples:
+    name: Examples against the local mock (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [11, 25]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: |
+            ${{ matrix.java }}
+            25
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - env:
+          TEST_JDK: ${{ matrix.java }}
+        run: ./gradlew runExamples -PtestJdk="$TEST_JDK"
