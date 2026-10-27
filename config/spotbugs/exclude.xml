@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: BSD-2-Clause -->
+<!-- SpotBugs + Find Security Bugs exclusions. Each one names its reason. -->
+<FindBugsFilter>
+  <!-- Every model field is immutable (List.copyOf lists, JsonValue, java.time types,
+       strings); SpotBugs cannot see that JsonValue is immutable. -->
+  <Match>
+    <Package name="com.oureawx.ensembleweather.model"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <!-- The internal transport passes body arrays along without copying them on purpose
+       (bounded at 64 MiB; copying would double the memory). Never exposed to callers. -->
+  <Match>
+    <Package name="com.oureawx.ensembleweather.internal"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+  <!-- defaults()/all() return a shared instance of an immutable options class. -->
+  <Match>
+    <Bug pattern="MS_EXPOSE_REP"/>
+    <Or>
+      <Class name="~com\.oureawx\.ensembleweather\.\w+(Options|Query)"/>
+      <Class name="com.oureawx.ensembleweather.model.JsonValue"/>
+    </Or>
+  </Match>
+  <!-- Retry jitter is not a security use of randomness. -->
+  <Match>
+    <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient$Builder"/>
+    <Bug pattern="PREDICTABLE_RANDOM"/>
+  </Match>
+  <!-- Case folding with Locale.ROOT of ASCII protocol tokens (URL schemes and hosts,
+       Cache-Control directives, two-letter state codes, a system property). -->
+  <Match>
+    <Or>
+      <Class name="com.oureawx.ensembleweather.internal.Engine"/>
+      <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient$Builder"/>
+      <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient"/>
+    </Or>
+    <Bug pattern="IMPROPER_UNICODE"/>
+  </Match>
+  <!-- The blocking methods rethrow the async call's own unchecked exception unchanged. -->
+  <Match>
+    <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient"/>
+    <Method name="join"/>
+    <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION"/>
+  </Match>
+</FindBugsFilter>

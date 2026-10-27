@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Every version the build uses. Resolved versions are pinned again in the
+# Gradle lockfiles (gradle.lockfile, buildscript-gradle.lockfile).
+
+[versions]
+jackson = "2.22.3"
+jspecify = "1.0.1"
+junit = "5.14.4"
+snakeyaml-engine = "2.10"
+errorprone = "2.50.0"
+nullaway = "0.14.2"
+google-java-format = "1.37.0"
+spotbugs = "4.10.5"
+findsecbugs = "1.14.0"
+
+[libraries]
+# The one runtime dependency (see CONTRIBUTING.md, "Runtime dependencies").
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
+# Compile-only: the nullness annotations on the public API.
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+# Tests only.
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+snakeyaml-engine = { module = "org.snakeyaml:snakeyaml-engine", version.ref = "snakeyaml-engine" }
+# Build tooling.
+google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
+errorprone-core = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
+nullaway = { module = "com.uber.nullaway:nullaway", version.ref = "nullaway" }
+spotbugs = { module = "com.github.spotbugs:spotbugs", version.ref = "spotbugs" }
+findsecbugs = { module = "com.h3xstream.findsecbugs:findsecbugs-plugin", version.ref = "findsecbugs" }
+
+[plugins]
+errorprone = { id = "net.ltgt.errorprone", version = "5.1.1" }
+spotbugs = { id = "com.github.spotbugs", version = "6.5.13" }
+maven-publish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }

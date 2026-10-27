@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: BSD-2-Clause
+package com.oureawx.ensembleweather.model;
+
+import java.util.Optional;
+
+/**
+ * A day's icon hint.
+ *
+ * <p>The API adds values within v1, so a value this SDK version does not know parses to {@link
+ * #UNKNOWN}, and the model keeps the raw string (its {@code ...AsString()} accessor).
+ */
+public enum DailyIcon {
+  /** {@code sunny}. */
+  SUNNY("sunny"),
+  /** {@code mostly_sunny}. */
+  MOSTLY_SUNNY("mostly_sunny"),
+  /** {@code partly_cloudy}. */
+  PARTLY_CLOUDY("partly_cloudy"),
+  /** {@code mostly_cloudy}. */
+  MOSTLY_CLOUDY("mostly_cloudy"),
+  /** {@code cloudy}. */
+  CLOUDY("cloudy"),
+  /** {@code sun_chance_showers}. */
+  SUN_CHANCE_SHOWERS("sun_chance_showers"),
+  /** {@code sun_showers_likely}. */
+  SUN_SHOWERS_LIKELY("sun_showers_likely"),
+  /** {@code sun_showers}. */
+  SUN_SHOWERS("sun_showers"),
+  /** {@code chance_showers}. */
+  CHANCE_SHOWERS("chance_showers"),
+  /** {@code chance_rain}. */
+  CHANCE_RAIN("chance_rain"),
+  /** {@code showers_likely}. */
+  SHOWERS_LIKELY("showers_likely"),
+  /** {@code rain_likely}. */
+  RAIN_LIKELY("rain_likely"),
+  /** {@code showers}. */
+  SHOWERS("showers"),
+  /** {@code rain}. */
+  RAIN("rain"),
+  /** {@code rain_snow_mix}. */
+  RAIN_SNOW_MIX("rain_snow_mix"),
+  /** {@code snow}. */
+  SNOW("snow"),
+  /** A value this SDK version does not know; read the model's raw string. */
+  UNKNOWN("");
+
+  private final String value;
+
+  DailyIcon(String value) {
+    this.value = value;
+  }
+
+  /**
+   * The API's spelling of this value.
+   *
+   * @return the wire value, or empty for {@link #UNKNOWN}
+   */
+  public Optional<String> wireValue() {
+    return value.isEmpty() ? Optional.empty() : Optional.of(value);
+  }
+
+  /**
+   * Parses the API's spelling.
+   *
+   * @param value the wire value
+   * @return the matching constant, or {@link #UNKNOWN}
+   */
+  public static DailyIcon fromWireValue(String value) {
+    for (DailyIcon c : values()) {
+      if (!c.value.isEmpty() && c.value.equals(value)) {
+        return c;
+      }
+    }
+    return UNKNOWN;
+  }
+}

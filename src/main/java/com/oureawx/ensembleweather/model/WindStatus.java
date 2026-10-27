@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: BSD-2-Clause
+package com.oureawx.ensembleweather.model;
+
+import java.util.Optional;
+
+/**
+ * A day's wind severity.
+ *
+ * <p>The API adds values within v1, so a value this SDK version does not know parses to {@link
+ * #UNKNOWN}, and the model keeps the raw string (its {@code ...AsString()} accessor).
+ */
+public enum WindStatus {
+  /** {@code calm}. */
+  CALM("calm"),
+  /** {@code light}. */
+  LIGHT("light"),
+  /** {@code moderate}. */
+  MODERATE("moderate"),
+  /** {@code strong}. */
+  STRONG("strong"),
+  /** {@code very_strong}. */
+  VERY_STRONG("very_strong"),
+  /** {@code extreme}. */
+  EXTREME("extreme"),
+  /** A value this SDK version does not know; read the model's raw string. */
+  UNKNOWN("");
+
+  private final String value;
+
+  WindStatus(String value) {
+    this.value = value;
+  }
+
+  /**
+   * The API's spelling of this value.
+   *
+   * @return the wire value, or empty for {@link #UNKNOWN}
+   */
+  public Optional<String> wireValue() {
+    return value.isEmpty() ? Optional.empty() : Optional.of(value);
+  }
+
+  /**
+   * Parses the API's spelling.
+   *
+   * @param value the wire value
+   * @return the matching constant, or {@link #UNKNOWN}
+   */
+  public static WindStatus fromWireValue(String value) {
+    for (WindStatus c : values()) {
+      if (!c.value.isEmpty() && c.value.equals(value)) {
+        return c;
+      }
+    }
+    return UNKNOWN;
+  }
+}

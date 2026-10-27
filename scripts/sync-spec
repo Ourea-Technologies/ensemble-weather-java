@@ -1,0 +1,60 @@
+#!/bin/sh
+# SPDX-License-Identifier: BSD-2-Clause
+# Copies ensemble-weather-spec at the ref in spec/VERSION into spec/.
+#
+#   scripts/sync-spec            write spec/ from the ref in spec/VERSION
+#   scripts/sync-spec <ref>      pin a new ref, then write spec/
+#   scripts/sync-spec --check    fail if spec/ differs from that ref (CI)
+#
+# The source repository is OUREA_SPEC_REPO (a URL or a local path), by
+# default https://github.com/Ourea-Technologies/ensemble-weather-spec.
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+spec="$root/spec"
+repo=${OUREA_SPEC_REPO:-https://github.com/Ourea-Technologies/ensemble-weather-spec}
+
+check=0
+ref=
+for arg in "$@"; do
+  case $arg in
+    --check) check=1 ;;
+    -*) echo "unknown option $arg" >&2; exit 2 ;;
+    *) ref=$arg ;;
+  esac
+done
+if [ -z "$ref" ]; then
+  ref=$(tr -d '[:space:]' < "$spec/VERSION")
+fi
+case $ref in
+  *[!0-9A-Za-z._/-]* | '') echo "bad ref '$ref'" >&2; exit 2 ;;
+esac
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/ourea-spec.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT INT TERM
+
+git clone --quiet --no-checkout "$repo" "$tmp/repo"
+if ! git -C "$tmp/repo" -c advice.detachedHead=false checkout --quiet "$ref" 2>/dev/null; then
+  echo "ensemble-weather-spec has no ref '$ref' at $repo" >&2
+  exit 1
+fi
+mkdir "$tmp/out"
+# Exactly the tracked files at the ref, nothing else.
+git -C "$tmp/repo" archive --format=tar HEAD | tar -x -C "$tmp/out"
+printf '%s\n' "$ref" > "$tmp/out/VERSION"
+
+if [ "$check" -eq 1 ]; then
+  if diff -r "$tmp/out" "$spec" > "$tmp/diff" 2>&1; then
+    count=$(find "$tmp/out" -type f | wc -l | tr -d ' ')
+    echo "spec/ matches ensemble-weather-spec@$ref ($count files)."
+  else
+    echo "spec/ does not match ensemble-weather-spec@$ref:" >&2
+    sed 's/^/  /' "$tmp/diff" >&2
+    echo "Run scripts/sync-spec to fix." >&2
+    exit 1
+  fi
+else
+  rm -rf "$spec"
+  mv "$tmp/out" "$spec"
+  echo "spec/ written from ensemble-weather-spec@$ref."
+fi

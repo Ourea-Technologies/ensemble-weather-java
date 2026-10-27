@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.kotlin/
+# IDEs
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+# Private scratch space
+.scratch/
+# Never commit signing material or credentials
+*.gpg
+*.asc
+secring.*
+local.properties
+.DS_Store
