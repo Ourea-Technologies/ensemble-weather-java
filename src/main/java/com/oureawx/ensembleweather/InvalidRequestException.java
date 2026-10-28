@@ -5,7 +5,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The server rejected the request ({@code BAD_REQUEST}, {@code INVALID_COORDINATES}, {@code
- * ELEVATION_REQUIRED} and the other 400 codes). Not retried.
+ * INVALID_ELEVATION}, {@code ELEVATION_REQUIRED}, HTTP 400). Not retried; {@link #param()} names
+ * the parameter when the error is about one.
  */
 public final class InvalidRequestException extends EnsembleWeatherException {
   private static final long serialVersionUID = 1L;
@@ -21,5 +22,25 @@ public final class InvalidRequestException extends EnsembleWeatherException {
   public InvalidRequestException(
       String message, int status, @Nullable String code, @Nullable String requestId) {
     super(ErrorCategory.INVALID_REQUEST, message, status, code, requestId, null);
+  }
+
+  /**
+   * Creates the exception with the error body's documentation link and parameter.
+   *
+   * @param message the human-readable detail
+   * @param status the HTTP status
+   * @param code the API's error code, or null
+   * @param requestId the request id, or null
+   * @param docUrl the body's {@code doc_url}, or null
+   * @param param the body's {@code param}, or null
+   */
+  public InvalidRequestException(
+      String message,
+      int status,
+      @Nullable String code,
+      @Nullable String requestId,
+      @Nullable String docUrl,
+      @Nullable String param) {
+    super(ErrorCategory.INVALID_REQUEST, message, status, code, requestId, docUrl, param, null);
   }
 }

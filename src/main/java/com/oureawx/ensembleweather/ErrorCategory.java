@@ -11,13 +11,15 @@ public enum ErrorCategory {
    * AuthenticationException}.
    */
   AUTHENTICATION,
-  /** {@code PRO_REQUIRED}, {@code FORBIDDEN}, or HTTP 403: see {@link PermissionException}. */
+  /** {@code PRO_REQUIRED}, or HTTP 403: see {@link PermissionException}. */
   PERMISSION,
   /** {@code LOCATION_NOT_FOUND} and friends, or HTTP 404 or 410: see {@link NotFoundException}. */
   NOT_FOUND,
   /** {@code BAD_REQUEST} and friends, or HTTP 400: see {@link InvalidRequestException}. */
   INVALID_REQUEST,
-  /** {@code OUTSIDE_COVERAGE} (by code only): see {@link OutsideCoverageException}. */
+  /**
+   * {@code OUTSIDE_COVERAGE} (a 404, mapped by code only): see {@link OutsideCoverageException}.
+   */
   OUTSIDE_COVERAGE,
   /** {@code TOO_MANY_REQUESTS}, or HTTP 429: see {@link RateLimitException}. */
   RATE_LIMITED,

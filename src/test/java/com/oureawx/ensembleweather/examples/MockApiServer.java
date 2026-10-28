@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -134,6 +135,7 @@ public final class MockApiServer implements AutoCloseable {
         int[] w = window(parts.length > 3 ? parts[3] : null);
         boolean amount = parts[0].equals("precipitation") || parts[0].equals("snowfall");
         Map<String, JsonValue> a = new LinkedHashMap<>();
+        a.put("term", str(terms[i]));
         a.put("variable", str(parts[0]));
         a.put("op", str(parts[1]));
         a.put("threshold", JsonValue.of(new BigDecimal(parts[2])));
@@ -144,6 +146,7 @@ public final class MockApiServer implements AutoCloseable {
         a.put("to", str("2026-11-16T00:00:00Z"));
         a.put("probability", num(canned[i % canned.length]));
         a.put("members", num(131));
+        a.put("null_reason", JsonValue.nullValue());
         answers.add(JsonValue.ofObject(a));
       }
       body.put("probabilities", JsonValue.ofArray(answers));
@@ -162,13 +165,16 @@ public final class MockApiServer implements AutoCloseable {
         String[] parts = term.split(":", -1);
         int[] w = window(parts[1]);
         Map<String, JsonValue> a = new LinkedHashMap<>();
+        a.put("term", str(term));
         a.put("variable", str(parts[0]));
         a.put("window_start_hours", num(w[0]));
         a.put("window_end_hours", num(w[1]));
+        a.put("aggregation", str("total"));
         a.put("from", str("2026-11-15T00:00:00Z"));
         a.put("to", str("2026-11-17T00:00:00Z"));
         a.put("quantiles", quantiles);
         a.put("members", num(131));
+        a.put("null_reason", JsonValue.nullValue());
         answers.add(JsonValue.ofObject(a));
       }
       body.put("window_totals", JsonValue.ofArray(answers));
@@ -219,7 +225,6 @@ public final class MockApiServer implements AutoCloseable {
     body.put("current", JsonValue.ofObject(c));
     body.put("as_of", str("2026-11-15T00:00:00Z"));
     body.put("model_run_initialized_at", str("2026-11-15T00:00:00Z"));
-    body.put("nowcast_hours", JsonValue.nullValue());
     body.put("units", str(units));
     body.put("attribution", attribution());
     return JsonValue.ofObject(body);
@@ -229,8 +234,9 @@ public final class MockApiServer implements AutoCloseable {
     Map<String, JsonValue> alert = new LinkedHashMap<>();
     alert.put("id", str("urn:oid:2.49.0.1.840.0.example"));
     alert.put("event", str("Winter Storm Warning"));
-    alert.put("severity", str("Severe"));
-    alert.put("urgency", str("Expected"));
+    alert.put("severity", str("severe"));
+    alert.put("urgency", str("expected"));
+    alert.put("certainty", str("likely"));
     alert.put("headline", str("Winter Storm Warning until 4 PM PST Sunday"));
     alert.put("expires", str("2026-11-16T00:00:00Z"));
     Map<String, JsonValue> body = new LinkedHashMap<>();
@@ -246,6 +252,10 @@ public final class MockApiServer implements AutoCloseable {
     Map<String, JsonValue> e = new LinkedHashMap<>();
     e.put("error", str(code));
     e.put("message", str(message));
+    e.put("request_id", str("mock-request"));
+    e.put(
+        "doc_url",
+        str("https://docs.oureawx.com/features/errors/#" + code.toLowerCase(Locale.ROOT)));
     return JsonValue.ofObject(e);
   }
 
@@ -267,7 +277,7 @@ public final class MockApiServer implements AutoCloseable {
       double lat = Double.parseDouble(p.getOrDefault("lat", "0"));
       double lon = Double.parseDouble(p.getOrDefault("lon", "0"));
       if (!(lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66)) {
-        status = 400;
+        status = 404;
         body =
             error("OUTSIDE_COVERAGE", lat + "," + lon + " is outside the forecast domain (CONUS).");
       } else if (path.equals("/api/v1/current")) {

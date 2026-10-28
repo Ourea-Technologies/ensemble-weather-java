@@ -58,20 +58,43 @@ public final class CatalogTemplateSummary extends Model {
   }
 
   /**
-   * Null = wildcard scope.
+   * The location type the template is scoped to, snake_case as {@code LocationRef.type}. Null =
+   * wildcard scope.
    *
-   * @return the {@code location_type} value, or empty when the response omits it
+   * @return the {@code location_type} value, or empty when the response omits it ({@link
+   *     LocationType#UNKNOWN} for a value this SDK version does not know)
    */
-  public Optional<String> locationType() {
+  public Optional<LocationType> locationType() {
+    return Optional.ofNullable(locationType).map(LocationType::fromWireValue);
+  }
+
+  /**
+   * The {@code location_type} value exactly as the API sent it, even when this SDK version does not
+   * know it.
+   *
+   * @return the raw {@code location_type} string, or empty when absent
+   */
+  public Optional<String> locationTypeAsString() {
     return Optional.ofNullable(locationType);
   }
 
   /**
-   * Null = wildcard scope.
+   * The page-template variant the template is scoped to, snake_case. Null = wildcard scope.
    *
-   * @return the {@code template_variant} value, or empty when the response omits it
+   * @return the {@code template_variant} value, or empty when the response omits it ({@link
+   *     TemplateVariant#UNKNOWN} for a value this SDK version does not know)
    */
-  public Optional<String> templateVariant() {
+  public Optional<TemplateVariant> templateVariant() {
+    return Optional.ofNullable(templateVariant).map(TemplateVariant::fromWireValue);
+  }
+
+  /**
+   * The {@code template_variant} value exactly as the API sent it, even when this SDK version does
+   * not know it.
+   *
+   * @return the raw {@code template_variant} string, or empty when absent
+   */
+  public Optional<String> templateVariantAsString() {
     return Optional.ofNullable(templateVariant);
   }
 
@@ -122,7 +145,19 @@ public final class CatalogTemplateSummary extends Model {
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder locationType(@Nullable String value) {
+    public Builder locationType(@Nullable LocationType value) {
+      this.locationType = value == null ? null : wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogTemplateSummary#locationTypeAsString()}, the raw wire value, kept verbatim
+     * even when this SDK version does not know it.
+     *
+     * @param value the raw value, or null for absent
+     * @return this builder
+     */
+    public Builder locationTypeAsString(@Nullable String value) {
       this.locationType = value;
       return this;
     }
@@ -133,7 +168,19 @@ public final class CatalogTemplateSummary extends Model {
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder templateVariant(@Nullable String value) {
+    public Builder templateVariant(@Nullable TemplateVariant value) {
+      this.templateVariant = value == null ? null : wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogTemplateSummary#templateVariantAsString()}, the raw wire value, kept
+     * verbatim even when this SDK version does not know it.
+     *
+     * @param value the raw value, or null for absent
+     * @return this builder
+     */
+    public Builder templateVariantAsString(@Nullable String value) {
       this.templateVariant = value;
       return this;
     }

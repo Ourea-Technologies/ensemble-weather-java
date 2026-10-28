@@ -126,7 +126,7 @@ public final class LocationSummary extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
    * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
    *     not know)

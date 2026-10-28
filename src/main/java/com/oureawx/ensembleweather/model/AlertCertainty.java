@@ -4,24 +4,29 @@ package com.oureawx.ensembleweather.model;
 import java.util.Optional;
 
 /**
- * A third-party ad network.
+ * The certainty of an alert.
  *
  * <p>The API adds values within v1, so a value this SDK version does not know parses to {@link
  * #UNKNOWN}, and the model keeps the raw string (its {@code ...AsString()} accessor).
  */
-public enum AdProvider {
-  /** {@code adsense}. */
-  ADSENSE("adsense"),
-  /** {@code gam}. */
-  GAM("gam"),
-  /** {@code custom}. */
-  CUSTOM("custom"),
-  /** A value this SDK version does not know; read the model's raw string. */
+public enum AlertCertainty {
+  /** {@code observed}. */
+  OBSERVED("observed"),
+  /** {@code likely}. */
+  LIKELY("likely"),
+  /** {@code possible}. */
+  POSSIBLE("possible"),
+  /** {@code unlikely}. */
+  UNLIKELY("unlikely"),
+  /**
+   * {@code unknown} on the wire, or a value this SDK version does not know; read the model's raw
+   * string to tell them apart.
+   */
   UNKNOWN("");
 
   private final String value;
 
-  AdProvider(String value) {
+  AlertCertainty(String value) {
     this.value = value;
   }
 
@@ -40,8 +45,8 @@ public enum AdProvider {
    * @param value the wire value
    * @return the matching constant, or {@link #UNKNOWN}
    */
-  public static AdProvider fromWireValue(String value) {
-    for (AdProvider c : values()) {
+  public static AlertCertainty fromWireValue(String value) {
+    for (AlertCertainty c : values()) {
       if (!c.value.isEmpty() && c.value.equals(value)) {
         return c;
       }

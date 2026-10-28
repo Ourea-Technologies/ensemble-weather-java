@@ -105,7 +105,7 @@ public final class PointInfo extends Model {
 
   /**
    * Elevation the forecast was computed at, in the response's length unit (m; ft for {@code
-   * units=imperial}), like {@code location.elevation}.
+   * units=imperial}); {@code location.elevation_m} is the same height in metres.
    *
    * @return the {@code elevation} value
    */
@@ -136,7 +136,8 @@ public final class PointInfo extends Model {
   }
 
   /**
-   * USPS code of the state the point is in (sets the daily summaries' timezone).
+   * The lowercase USPS code of the state the point is in (sets the daily summaries' timezone), as
+   * {@code location.state}.
    *
    * @return the {@code state} value
    */

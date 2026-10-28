@@ -188,7 +188,7 @@ public final class CatalogStation extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
    * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
    *     not know)
@@ -244,11 +244,22 @@ public final class CatalogStation extends Model {
   }
 
   /**
-   * The {@code network} value.
+   * Observation network, snake_case (was the CMS enum's {@code Snotel}).
    *
-   * @return the {@code network} value, or empty when the response omits it
+   * @return the {@code network} value, or empty when the response omits it ({@link
+   *     StationNetwork#UNKNOWN} for a value this SDK version does not know)
    */
-  public Optional<String> network() {
+  public Optional<StationNetwork> network() {
+    return Optional.ofNullable(network).map(StationNetwork::fromWireValue);
+  }
+
+  /**
+   * The {@code network} value exactly as the API sent it, even when this SDK version does not know
+   * it.
+   *
+   * @return the raw {@code network} string, or empty when absent
+   */
+  public Optional<String> networkAsString() {
     return Optional.ofNullable(network);
   }
 
@@ -289,11 +300,22 @@ public final class CatalogStation extends Model {
   }
 
   /**
-   * The {@code station_status} value.
+   * Live-feed status, snake_case (was {@code Active}).
    *
-   * @return the {@code station_status} value, or empty when the response omits it
+   * @return the {@code station_status} value, or empty when the response omits it ({@link
+   *     StationStatus#UNKNOWN} for a value this SDK version does not know)
    */
-  public Optional<String> stationStatus() {
+  public Optional<StationStatus> stationStatus() {
+    return Optional.ofNullable(stationStatus).map(StationStatus::fromWireValue);
+  }
+
+  /**
+   * The {@code station_status} value exactly as the API sent it, even when this SDK version does
+   * not know it.
+   *
+   * @return the raw {@code station_status} string, or empty when absent
+   */
+  public Optional<String> stationStatusAsString() {
     return Optional.ofNullable(stationStatus);
   }
 
@@ -664,7 +686,19 @@ public final class CatalogStation extends Model {
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder network(@Nullable String value) {
+    public Builder network(@Nullable StationNetwork value) {
+      this.network = value == null ? null : wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogStation#networkAsString()}, the raw wire value, kept verbatim even when
+     * this SDK version does not know it.
+     *
+     * @param value the raw value, or null for absent
+     * @return this builder
+     */
+    public Builder networkAsString(@Nullable String value) {
       this.network = value;
       return this;
     }
@@ -719,7 +753,19 @@ public final class CatalogStation extends Model {
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder stationStatus(@Nullable String value) {
+    public Builder stationStatus(@Nullable StationStatus value) {
+      this.stationStatus = value == null ? null : wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogStation#stationStatusAsString()}, the raw wire value, kept verbatim even
+     * when this SDK version does not know it.
+     *
+     * @param value the raw value, or null for absent
+     * @return this builder
+     */
+    public Builder stationStatusAsString(@Nullable String value) {
       this.stationStatus = value;
       return this;
     }

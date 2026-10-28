@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package com.oureawx.ensembleweather.model;
 
-import java.util.Optional;
 import java.util.OptionalDouble;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Daily wind summary. Uses gust data when available, otherwise sustained wind.
+ * A day's wind summary ({@code DailyForecast.wind}). Uses gust data when available, otherwise
+ * sustained wind.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code DailyWind}.
  */
 public final class DailyWind extends Model {
-  private final @Nullable String status;
-  private final @Nullable Double peakSpeed;
+  private final String status;
+  private final double peakSpeed;
   private final @Nullable Double peakSpeedP90;
-  private final @Nullable Boolean isGust;
+  private final boolean isGust;
   private final @Nullable Double sustainedSpeed;
 
   private DailyWind(Builder b) {
-    this.status = b.status;
-    this.peakSpeed = b.peakSpeed;
+    this.status = require(b.status, "status");
+    this.peakSpeed = require(b.peakSpeed, "peak_speed");
     this.peakSpeedP90 = b.peakSpeedP90;
-    this.isGust = b.isGust;
+    this.isGust = require(b.isGust, "is_gust");
     this.sustainedSpeed = b.sustainedSpeed;
   }
 
@@ -55,21 +55,21 @@ public final class DailyWind extends Model {
    * moderate: 22-34, strong: 34-49 (lifts affected), very_strong: 49-67 (most lifts closed),
    * extreme: 67+ (all lifts closed).
    *
-   * @return the {@code status} value, or empty when the response omits it ({@link
-   *     WindStatus#UNKNOWN} for a value this SDK version does not know)
+   * @return the {@code status} value ({@link WindStatus#UNKNOWN} for a value this SDK version does
+   *     not know)
    */
-  public Optional<WindStatus> status() {
-    return Optional.ofNullable(status).map(WindStatus::fromWireValue);
+  public WindStatus status() {
+    return WindStatus.fromWireValue(status);
   }
 
   /**
    * The {@code status} value exactly as the API sent it, even when this SDK version does not know
    * it.
    *
-   * @return the raw {@code status} string, or empty when absent
+   * @return the raw {@code status} string
    */
-  public Optional<String> statusAsString() {
-    return Optional.ofNullable(status);
+  public String statusAsString() {
+    return status;
   }
 
   /**
@@ -77,10 +77,10 @@ public final class DailyWind extends Model {
    * day's hours of the hourly gust ensemble mean when gust data is available, otherwise of the
    * sustained wind mean. Comparable to a deterministic provider's daily gust (NWS).
    *
-   * @return the {@code peak_speed} value, or empty when the response omits it
+   * @return the {@code peak_speed} value
    */
-  public OptionalDouble peakSpeed() {
-    return peakSpeed == null ? OptionalDouble.empty() : OptionalDouble.of(peakSpeed);
+  public double peakSpeed() {
+    return peakSpeed;
   }
 
   /**
@@ -96,10 +96,10 @@ public final class DailyWind extends Model {
   /**
    * Whether peak_speed is from gust data (true) or sustained wind (false).
    *
-   * @return the {@code is_gust} value, or empty when the response omits it
+   * @return the {@code is_gust} value
    */
-  public Optional<Boolean> isGust() {
-    return Optional.ofNullable(isGust);
+  public boolean isGust() {
+    return isGust;
   }
 
   /**
@@ -139,13 +139,13 @@ public final class DailyWind extends Model {
     private Builder() {}
 
     /**
-     * Sets {@link DailyWind#status()}.
+     * Sets {@link DailyWind#status()}. Required.
      *
-     * @param value the value, or null for absent
+     * @param value the value
      * @return this builder
      */
-    public Builder status(@Nullable WindStatus value) {
-      this.status = value == null ? null : wire(value.wireValue());
+    public Builder status(WindStatus value) {
+      this.status = wire(value.wireValue());
       return this;
     }
 
@@ -153,21 +153,21 @@ public final class DailyWind extends Model {
      * Sets {@link DailyWind#statusAsString()}, the raw wire value, kept verbatim even when this SDK
      * version does not know it.
      *
-     * @param value the raw value, or null for absent
+     * @param value the raw value
      * @return this builder
      */
-    public Builder statusAsString(@Nullable String value) {
+    public Builder statusAsString(String value) {
       this.status = value;
       return this;
     }
 
     /**
-     * Sets {@link DailyWind#peakSpeed()}.
+     * Sets {@link DailyWind#peakSpeed()}. Required.
      *
-     * @param value the value, or null for absent
+     * @param value the value
      * @return this builder
      */
-    public Builder peakSpeed(@Nullable Double value) {
+    public Builder peakSpeed(double value) {
       this.peakSpeed = value;
       return this;
     }
@@ -184,12 +184,12 @@ public final class DailyWind extends Model {
     }
 
     /**
-     * Sets {@link DailyWind#isGust()}.
+     * Sets {@link DailyWind#isGust()}. Required.
      *
-     * @param value the value, or null for absent
+     * @param value the value
      * @return this builder
      */
-    public Builder isGust(@Nullable Boolean value) {
+    public Builder isGust(boolean value) {
       this.isGust = value;
       return this;
     }

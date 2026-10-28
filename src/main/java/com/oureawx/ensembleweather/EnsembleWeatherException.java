@@ -18,8 +18,9 @@ import org.jspecify.annotations.Nullable;
  * }</pre>
  *
  * <p>An HTTP error carries {@link #status()}, the API's {@link #code()} (verbatim, even one this
- * SDK version does not know) and the server's {@link #requestId()}. The API key never appears in a
- * message or in {@link #toString()}.
+ * SDK version does not know), the server's {@link #requestId()}, the code's {@link #docUrl()} and,
+ * on a 400 about one parameter, its {@link #param()}. The API key never appears in a message or in
+ * {@link #toString()}.
  */
 public abstract class EnsembleWeatherException extends RuntimeException {
   private static final long serialVersionUID = 1L;
@@ -35,6 +36,12 @@ public abstract class EnsembleWeatherException extends RuntimeException {
 
   /** The request id, or null. */
   private final @Nullable String requestId;
+
+  /** The code's documentation URL, or null. */
+  private final @Nullable String docUrl;
+
+  /** The query parameter a 400 is about, or null. */
+  private final @Nullable String param;
 
   /**
    * Creates the exception.
@@ -53,11 +60,38 @@ public abstract class EnsembleWeatherException extends RuntimeException {
       @Nullable String code,
       @Nullable String requestId,
       @Nullable Throwable cause) {
+    this(category, message, status, code, requestId, null, null, cause);
+  }
+
+  /**
+   * Creates the exception with the error body's documentation link and parameter.
+   *
+   * @param category the category, fixed by the subclass
+   * @param message the human-readable detail
+   * @param status the HTTP status, or null when there was no response
+   * @param code the API's error code, or null
+   * @param requestId the request id (the body's {@code request_id}, else {@code X-Request-Id}), or
+   *     null
+   * @param docUrl the body's {@code doc_url}, or null
+   * @param param the body's {@code param}, or null
+   * @param cause the underlying exception, or null
+   */
+  protected EnsembleWeatherException(
+      ErrorCategory category,
+      String message,
+      @Nullable Integer status,
+      @Nullable String code,
+      @Nullable String requestId,
+      @Nullable String docUrl,
+      @Nullable String param,
+      @Nullable Throwable cause) {
     super(message, cause);
     this.category = category;
     this.status = status;
     this.code = code;
     this.requestId = requestId;
+    this.docUrl = docUrl;
+    this.param = param;
   }
 
   /**
@@ -88,11 +122,32 @@ public abstract class EnsembleWeatherException extends RuntimeException {
   }
 
   /**
-   * The server's {@code X-Request-Id}, for support requests.
+   * The server's request id (the error body's {@code request_id}, else the {@code X-Request-Id}
+   * header), for support requests.
    *
    * @return the request id, or empty
    */
   public final Optional<String> requestId() {
     return Optional.ofNullable(requestId);
+  }
+
+  /**
+   * The error code's explanation on the docs errors page (cause, fix, whether to retry): the error
+   * body's {@code doc_url}.
+   *
+   * @return the URL, or empty when the response did not carry one
+   */
+  public final Optional<String> docUrl() {
+    return Optional.ofNullable(docUrl);
+  }
+
+  /**
+   * On a 400 about one query parameter, its name ({@code max_hours}, {@code prob}, {@code lat}):
+   * the error body's {@code param}.
+   *
+   * @return the parameter name, or empty when the error is not about one parameter
+   */
+  public final Optional<String> param() {
+    return Optional.ofNullable(param);
   }
 }

@@ -16,7 +16,7 @@ public final class ModelStats extends Model {
   private final @Nullable Quantiles dewpoint;
   private final @Nullable Quantiles precipitation;
   private final @Nullable Quantiles windSpeed;
-  private final @Nullable Quantiles windDirection;
+  private final @Nullable CircularStats windDirection;
   private final @Nullable Quantiles snowLevel;
   private final @Nullable Quantiles slr;
   private final @Nullable Quantiles snowfall;
@@ -114,11 +114,12 @@ public final class ModelStats extends Model {
   }
 
   /**
-   * Absent when this model published nothing for the hour; never 0.
+   * Absent when this model published nothing for the hour. The model's wind direction as a circular
+   * distribution, as {@code EnsembleStats.wind_direction}.
    *
    * @return the {@code wind_direction} value, or empty when the response omits it
    */
-  public Optional<Quantiles> windDirection() {
+  public Optional<CircularStats> windDirection() {
     return Optional.ofNullable(windDirection);
   }
 
@@ -213,7 +214,7 @@ public final class ModelStats extends Model {
     private @Nullable Quantiles dewpoint;
     private @Nullable Quantiles precipitation;
     private @Nullable Quantiles windSpeed;
-    private @Nullable Quantiles windDirection;
+    private @Nullable CircularStats windDirection;
     private @Nullable Quantiles snowLevel;
     private @Nullable Quantiles slr;
     private @Nullable Quantiles snowfall;
@@ -282,7 +283,7 @@ public final class ModelStats extends Model {
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder windDirection(@Nullable Quantiles value) {
+    public Builder windDirection(@Nullable CircularStats value) {
       this.windDirection = value;
       return this;
     }

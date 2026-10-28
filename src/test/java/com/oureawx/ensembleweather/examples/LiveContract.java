@@ -46,7 +46,8 @@ public final class LiveContract {
                         .over(Window.hours(48)))
                 .total(TotalTerm.of(Variable.SNOWFALL, Window.hours(72)))
                 .build());
-    check(f.location().slug().equals("mt-hood-meadows"), "forecast for a named location");
+    check(
+        f.location().slug().orElse("").equals("mt-hood-meadows"), "forecast for a named location");
     check(f.probabilities().size() == 2, "prob terms answered in the caller's order");
     check(
         f.probabilities().get(0).variable() == Variable.SNOWFALL
@@ -59,11 +60,12 @@ public final class LiveContract {
     check(
         !client.listCatalogLocations(CatalogLocationQuery.all()).items().isEmpty(), "catalog page");
     check(!client.getAttribution().providers().isEmpty(), "attribution");
-    check(client.getCurrent(meadows).location().slug().equals("mt-hood-meadows"), "current");
+    check(
+        client.getCurrent(meadows).location().slug().orElse("").equals("mt-hood-meadows"),
+        "current");
     check(client.getAlerts(meadows).alertCount() >= 0, "alerts");
     check(client.getNearby(meadows).count() >= 0, "nearby");
     check(client.getRuns().count() >= 0, "runs");
-    check(client.getStormReports().count() >= 0, "storm reports");
 
     ForecastResponse again = client.getForecast(meadows);
     System.out.println(

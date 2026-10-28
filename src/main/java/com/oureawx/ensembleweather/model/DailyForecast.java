@@ -18,23 +18,21 @@ public final class DailyForecast extends Model {
   private final String condition;
   private final String conditionText;
   private final String conditionIcon;
-  private final @Nullable String precipType;
+  private final @Nullable String precipitationType;
   private final Quantiles high;
   private final Quantiles low;
   private final @Nullable Quantiles feelsLikeHigh;
   private final @Nullable Quantiles feelsLikeLow;
-  private final @Nullable Quantiles feelsLikeUtciHigh;
-  private final @Nullable Quantiles feelsLikeUtciLow;
-  private final Quantiles totalPrecip;
+  private final Quantiles totalPrecipitation;
   private final @Nullable Quantiles totalSnowfall;
-  private final double precipProbability;
-  private final double precipOccurrenceProbability;
+  private final double precipitationProbability;
+  private final double precipitationOccurrenceProbability;
   private final double snowProbability;
   private final @Nullable Double snowLevelMean;
   private final @Nullable Quantiles snowLevel;
-  private final @Nullable Quantiles totalPrecipIfWet;
+  private final @Nullable Quantiles totalPrecipitationIfWet;
   private final @Nullable Quantiles totalSnowfallIfWet;
-  private final PrecipDisplay precipDisplay;
+  private final PrecipDisplay precipitationDisplay;
   private final @Nullable Double cloudCoverMean;
   private final @Nullable DailyWind wind;
   private final @Nullable String stormOrientation;
@@ -47,24 +45,23 @@ public final class DailyForecast extends Model {
     this.condition = require(b.condition, "condition");
     this.conditionText = require(b.conditionText, "condition_text");
     this.conditionIcon = require(b.conditionIcon, "condition_icon");
-    this.precipType = b.precipType;
+    this.precipitationType = b.precipitationType;
     this.high = require(b.high, "high");
     this.low = require(b.low, "low");
     this.feelsLikeHigh = b.feelsLikeHigh;
     this.feelsLikeLow = b.feelsLikeLow;
-    this.feelsLikeUtciHigh = b.feelsLikeUtciHigh;
-    this.feelsLikeUtciLow = b.feelsLikeUtciLow;
-    this.totalPrecip = require(b.totalPrecip, "total_precip");
+    this.totalPrecipitation = require(b.totalPrecipitation, "total_precipitation");
     this.totalSnowfall = b.totalSnowfall;
-    this.precipProbability = require(b.precipProbability, "precip_probability");
-    this.precipOccurrenceProbability =
-        require(b.precipOccurrenceProbability, "precip_occurrence_probability");
+    this.precipitationProbability =
+        require(b.precipitationProbability, "precipitation_probability");
+    this.precipitationOccurrenceProbability =
+        require(b.precipitationOccurrenceProbability, "precipitation_occurrence_probability");
     this.snowProbability = require(b.snowProbability, "snow_probability");
     this.snowLevelMean = b.snowLevelMean;
     this.snowLevel = b.snowLevel;
-    this.totalPrecipIfWet = b.totalPrecipIfWet;
+    this.totalPrecipitationIfWet = b.totalPrecipitationIfWet;
     this.totalSnowfallIfWet = b.totalSnowfallIfWet;
-    this.precipDisplay = require(b.precipDisplay, "precip_display");
+    this.precipitationDisplay = require(b.precipitationDisplay, "precipitation_display");
     this.cloudCoverMean = b.cloudCoverMean;
     this.wind = b.wind;
     this.stormOrientation = b.stormOrientation;
@@ -93,23 +90,21 @@ public final class DailyForecast extends Model {
     b.condition = this.condition;
     b.conditionText = this.conditionText;
     b.conditionIcon = this.conditionIcon;
-    b.precipType = this.precipType;
+    b.precipitationType = this.precipitationType;
     b.high = this.high;
     b.low = this.low;
     b.feelsLikeHigh = this.feelsLikeHigh;
     b.feelsLikeLow = this.feelsLikeLow;
-    b.feelsLikeUtciHigh = this.feelsLikeUtciHigh;
-    b.feelsLikeUtciLow = this.feelsLikeUtciLow;
-    b.totalPrecip = this.totalPrecip;
+    b.totalPrecipitation = this.totalPrecipitation;
     b.totalSnowfall = this.totalSnowfall;
-    b.precipProbability = this.precipProbability;
-    b.precipOccurrenceProbability = this.precipOccurrenceProbability;
+    b.precipitationProbability = this.precipitationProbability;
+    b.precipitationOccurrenceProbability = this.precipitationOccurrenceProbability;
     b.snowProbability = this.snowProbability;
     b.snowLevelMean = this.snowLevelMean;
     b.snowLevel = this.snowLevel;
-    b.totalPrecipIfWet = this.totalPrecipIfWet;
+    b.totalPrecipitationIfWet = this.totalPrecipitationIfWet;
     b.totalSnowfallIfWet = this.totalSnowfallIfWet;
-    b.precipDisplay = this.precipDisplay;
+    b.precipitationDisplay = this.precipitationDisplay;
     b.cloudCoverMean = this.cloudCoverMean;
     b.wind = this.wind;
     b.stormOrientation = this.stormOrientation;
@@ -129,9 +124,10 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * A stable machine code to switch on -- the display text ({@code condition_text}) lowercased,
-   * each run of other characters one {@code _} ({@code partly_cloudy}, {@code
-   * rain_snow_mix_likely}). Treat unknown codes as additive.
+   * A stable machine code to switch on ({@code partly_cloudy}, {@code rain_snow_mix_likely}). Treat
+   * unknown codes as additive. {@code condition_text} is its display text, in English today; it is
+   * for showing, never for parsing or deriving the code (a {@code lang=} query parameter is
+   * reserved for localised text).
    *
    * @return the {@code condition} value ({@link DailyCondition#UNKNOWN} for a value this SDK
    *     version does not know)
@@ -161,19 +157,14 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * Machine-readable icon hint for frontends. Sky-only hints name the five sky classes.
-   * Precipitating hints carry the SIDE of the sky: {@code sun_*} when the daytime sky leans clear
-   * ({@code P(< 40%) > P(>= 80%)}) — a sun beside the rain cloud — and plain otherwise. Additive:
-   * {@code mostly_sunny}, {@code mostly_cloudy}, {@code sun_chance_showers}, {@code
-   * sun_showers_likely}, {@code sun_showers}, {@code chance_rain}, {@code showers_likely}, {@code
-   * showers}. Retired: {@code sun_rain}, {@code scattered_showers}, {@code
-   * night_scattered_showers}.
+   * Machine-readable icon hint for frontends: one of {@link ConditionIcon} (the {@code night_*}
+   * forms are hourly only). Treat unknown values as additive.
    *
-   * @return the {@code condition_icon} value ({@link DailyIcon#UNKNOWN} for a value this SDK
+   * @return the {@code condition_icon} value ({@link ConditionIcon#UNKNOWN} for a value this SDK
    *     version does not know)
    */
-  public DailyIcon conditionIcon() {
-    return DailyIcon.fromWireValue(conditionIcon);
+  public ConditionIcon conditionIcon() {
+    return ConditionIcon.fromWireValue(conditionIcon);
   }
 
   /**
@@ -187,31 +178,32 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * The day's precipitation type, {@code null} when {@code precip_occurrence_probability} is under
+   * The day's precipitation type, absent when {@code precipitation_occurrence_probability} is under
    * 0.15. Read off the day's HOURLY phases: the day's snow share is the precipitation-weighted mean
-   * of the {@code timeseries[].precip_type.snow_probability} of its wet hours (the share of each
-   * hour's water that falls as snow), read at that field's 0.01 resolution — {@code snow} when at
-   * least 99.5% of the day's water is snow, {@code rain} when under 0.5% is (or no hour is typed),
-   * {@code rain_snow_mix} between. So a day whose wet hours are all {@code rain_snow_mix} is {@code
-   * rain_snow_mix}, and a rain day with one heavy snow hour is {@code rain_snow_mix}, not {@code
-   * rain}. {@code condition} states this type's phase at its tier: a Snow or Rain/Snow Mix label,
-   * or a liquid label. {@code freezing_rain} is an hourly type only; such hours count as liquid.
+   * of the {@code timeseries[].precipitation_type.snow_probability} of its wet hours (the share of
+   * each hour's water that falls as snow), read at that field's 0.01 resolution — {@code snow} when
+   * at least 99.5% of the day's water is snow, {@code rain} when under 0.5% is (or no hour is
+   * typed), {@code rain_snow_mix} between. So a day whose wet hours are all {@code rain_snow_mix}
+   * is {@code rain_snow_mix}, and a rain day with one heavy snow hour is {@code rain_snow_mix}, not
+   * {@code rain}. {@code condition} states this type's phase at its tier: a Snow or Rain/Snow Mix
+   * label, or a liquid label. {@code freezing_rain} is an hourly type only; such hours count as
+   * liquid.
    *
-   * @return the {@code precip_type} value, or empty when the response omits it ({@link
+   * @return the {@code precipitation_type} value, or empty when the response omits it ({@link
    *     PrecipitationType#UNKNOWN} for a value this SDK version does not know)
    */
-  public Optional<PrecipitationType> precipType() {
-    return Optional.ofNullable(precipType).map(PrecipitationType::fromWireValue);
+  public Optional<PrecipitationType> precipitationType() {
+    return Optional.ofNullable(precipitationType).map(PrecipitationType::fromWireValue);
   }
 
   /**
-   * The {@code precip_type} value exactly as the API sent it, even when this SDK version does not
-   * know it.
+   * The {@code precipitation_type} value exactly as the API sent it, even when this SDK version
+   * does not know it.
    *
-   * @return the raw {@code precip_type} string, or empty when absent
+   * @return the raw {@code precipitation_type} string, or empty when absent
    */
-  public Optional<String> precipTypeAsString() {
-    return Optional.ofNullable(precipType);
+  public Optional<String> precipitationTypeAsString() {
+    return Optional.ofNullable(precipitationType);
   }
 
   /**
@@ -264,32 +256,12 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * The daily UTCI maximum, built like {@code feels_like_high} from the hourly {@code
-   * feels_like_utci}. Present only with {@code feels_like=utci}, not served yet: absent today.
+   * The {@code total_precipitation} value.
    *
-   * @return the {@code feels_like_utci_high} value, or empty when the response omits it
+   * @return the {@code total_precipitation} value
    */
-  public Optional<Quantiles> feelsLikeUtciHigh() {
-    return Optional.ofNullable(feelsLikeUtciHigh);
-  }
-
-  /**
-   * The daily UTCI minimum, built like {@code feels_like_low} from the hourly {@code
-   * feels_like_utci}. Present only with {@code feels_like=utci}, not served yet: absent today.
-   *
-   * @return the {@code feels_like_utci_low} value, or empty when the response omits it
-   */
-  public Optional<Quantiles> feelsLikeUtciLow() {
-    return Optional.ofNullable(feelsLikeUtciLow);
-  }
-
-  /**
-   * The {@code total_precip} value.
-   *
-   * @return the {@code total_precip} value
-   */
-  public Quantiles totalPrecip() {
-    return totalPrecip;
+  public Quantiles totalPrecipitation() {
+    return totalPrecipitation;
   }
 
   /**
@@ -304,31 +276,31 @@ public final class DailyForecast extends Model {
   /**
    * <b>MEANINGFUL precipitation: {@code P(day total >= 2.5 mm)}</b> (0-1) — the headline number,
    * the chance the day accumulates a tenth of an inch or more. For "will it precipitate at all",
-   * read {@code precip_occurrence_probability} instead; the two answer different questions and
-   * {@code precip_probability} is always the smaller of the two.
+   * read {@code precipitation_occurrence_probability} instead; the two answer different questions
+   * and {@code precipitation_probability} is always the smaller of the two.
    *
-   * @return the {@code precip_probability} value
+   * @return the {@code precipitation_probability} value
    */
-  public double precipProbability() {
-    return precipProbability;
+  public double precipitationProbability() {
+    return precipitationProbability;
   }
 
   /**
    * <b>OCCURRENCE: {@code P(day total >= 1.0 mm)}</b> (0-1) — the chance the day precipitates at
-   * all, as opposed to {@code precip_probability}'s chance that it amounts to anything. This is the
-   * number {@code condition}'s tier and {@code precip_type}'s dry gate read; their PHASE comes from
-   * the day's hourly phases (see {@code precip_type}).
+   * all, as opposed to {@code precipitation_probability}'s chance that it amounts to anything. This
+   * is the number {@code condition}'s tier and {@code precipitation_type}'s dry gate read; their
+   * PHASE comes from the day's hourly phases (see {@code precipitation_type}).
    *
-   * @return the {@code precip_occurrence_probability} value
+   * @return the {@code precipitation_occurrence_probability} value
    */
-  public double precipOccurrenceProbability() {
-    return precipOccurrenceProbability;
+  public double precipitationOccurrenceProbability() {
+    return precipitationOccurrenceProbability;
   }
 
   /**
    * {@code P(day snowfall total >= 2.5 mm)} (0-1), inclusive. Same estimator, threshold and caveats
-   * as {@code precip_probability} — see its description. There is no snowfall counterpart to {@code
-   * precip_occurrence_probability}: snow occurrence is not separately calibrated.
+   * as {@code precipitation_probability} — see its description. There is no snowfall counterpart to
+   * {@code precipitation_occurrence_probability}: snow occurrence is not separately calibrated.
    *
    * @return the {@code snow_probability} value
    */
@@ -357,19 +329,20 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * The day total GIVEN a wet day (total &gt;= the {@code daily_precip_occurrence_probability}
-   * threshold, 1.0 mm): the upper part of the day-total distribution, renormalized. Not the mean
-   * divided by the probability. Omitted under a 0.1 % chance.
+   * The day total GIVEN a wet day (total &gt;= the {@code
+   * daily_precipitation_occurrence_probability} threshold, 1.0 mm): the upper part of the day-total
+   * distribution, renormalized. Not the mean divided by the probability. Omitted under a 0.1 %
+   * chance.
    *
-   * @return the {@code total_precip_if_wet} value, or empty when the response omits it
+   * @return the {@code total_precipitation_if_wet} value, or empty when the response omits it
    */
-  public Optional<Quantiles> totalPrecipIfWet() {
-    return Optional.ofNullable(totalPrecipIfWet);
+  public Optional<Quantiles> totalPrecipitationIfWet() {
+    return Optional.ofNullable(totalPrecipitationIfWet);
   }
 
   /**
    * The day's snowfall given a snowy day (&gt;= the {@code daily_snow_probability} threshold, 2.5
-   * mm), as {@code total_precip_if_wet}.
+   * mm), as {@code total_precipitation_if_wet}.
    *
    * @return the {@code total_snowfall_if_wet} value, or empty when the response omits it
    */
@@ -378,12 +351,12 @@ public final class DailyForecast extends Model {
   }
 
   /**
-   * The {@code precip_display} value.
+   * The {@code precipitation_display} value.
    *
-   * @return the {@code precip_display} value
+   * @return the {@code precipitation_display} value
    */
-  public PrecipDisplay precipDisplay() {
-    return precipDisplay;
+  public PrecipDisplay precipitationDisplay() {
+    return precipitationDisplay;
   }
 
   /**
@@ -466,23 +439,21 @@ public final class DailyForecast extends Model {
       condition,
       conditionText,
       conditionIcon,
-      precipType,
+      precipitationType,
       high,
       low,
       feelsLikeHigh,
       feelsLikeLow,
-      feelsLikeUtciHigh,
-      feelsLikeUtciLow,
-      totalPrecip,
+      totalPrecipitation,
       totalSnowfall,
-      precipProbability,
-      precipOccurrenceProbability,
+      precipitationProbability,
+      precipitationOccurrenceProbability,
       snowProbability,
       snowLevelMean,
       snowLevel,
-      totalPrecipIfWet,
+      totalPrecipitationIfWet,
       totalSnowfallIfWet,
-      precipDisplay,
+      precipitationDisplay,
       cloudCoverMean,
       wind,
       stormOrientation,
@@ -502,23 +473,21 @@ public final class DailyForecast extends Model {
     "condition",
     "conditionText",
     "conditionIcon",
-    "precipType",
+    "precipitationType",
     "high",
     "low",
     "feelsLikeHigh",
     "feelsLikeLow",
-    "feelsLikeUtciHigh",
-    "feelsLikeUtciLow",
-    "totalPrecip",
+    "totalPrecipitation",
     "totalSnowfall",
-    "precipProbability",
-    "precipOccurrenceProbability",
+    "precipitationProbability",
+    "precipitationOccurrenceProbability",
     "snowProbability",
     "snowLevelMean",
     "snowLevel",
-    "totalPrecipIfWet",
+    "totalPrecipitationIfWet",
     "totalSnowfallIfWet",
-    "precipDisplay",
+    "precipitationDisplay",
     "cloudCoverMean",
     "wind",
     "stormOrientation",
@@ -533,23 +502,21 @@ public final class DailyForecast extends Model {
     private @Nullable String condition;
     private @Nullable String conditionText;
     private @Nullable String conditionIcon;
-    private @Nullable String precipType;
+    private @Nullable String precipitationType;
     private @Nullable Quantiles high;
     private @Nullable Quantiles low;
     private @Nullable Quantiles feelsLikeHigh;
     private @Nullable Quantiles feelsLikeLow;
-    private @Nullable Quantiles feelsLikeUtciHigh;
-    private @Nullable Quantiles feelsLikeUtciLow;
-    private @Nullable Quantiles totalPrecip;
+    private @Nullable Quantiles totalPrecipitation;
     private @Nullable Quantiles totalSnowfall;
-    private @Nullable Double precipProbability;
-    private @Nullable Double precipOccurrenceProbability;
+    private @Nullable Double precipitationProbability;
+    private @Nullable Double precipitationOccurrenceProbability;
     private @Nullable Double snowProbability;
     private @Nullable Double snowLevelMean;
     private @Nullable Quantiles snowLevel;
-    private @Nullable Quantiles totalPrecipIfWet;
+    private @Nullable Quantiles totalPrecipitationIfWet;
     private @Nullable Quantiles totalSnowfallIfWet;
-    private @Nullable PrecipDisplay precipDisplay;
+    private @Nullable PrecipDisplay precipitationDisplay;
     private @Nullable Double cloudCoverMean;
     private @Nullable DailyWind wind;
     private @Nullable String stormOrientation;
@@ -610,7 +577,7 @@ public final class DailyForecast extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder conditionIcon(DailyIcon value) {
+    public Builder conditionIcon(ConditionIcon value) {
       this.conditionIcon = wire(value.wireValue());
       return this;
     }
@@ -628,25 +595,25 @@ public final class DailyForecast extends Model {
     }
 
     /**
-     * Sets {@link DailyForecast#precipType()}.
+     * Sets {@link DailyForecast#precipitationType()}.
      *
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder precipType(@Nullable PrecipitationType value) {
-      this.precipType = value == null ? null : wire(value.wireValue());
+    public Builder precipitationType(@Nullable PrecipitationType value) {
+      this.precipitationType = value == null ? null : wire(value.wireValue());
       return this;
     }
 
     /**
-     * Sets {@link DailyForecast#precipTypeAsString()}, the raw wire value, kept verbatim even when
-     * this SDK version does not know it.
+     * Sets {@link DailyForecast#precipitationTypeAsString()}, the raw wire value, kept verbatim
+     * even when this SDK version does not know it.
      *
      * @param value the raw value, or null for absent
      * @return this builder
      */
-    public Builder precipTypeAsString(@Nullable String value) {
-      this.precipType = value;
+    public Builder precipitationTypeAsString(@Nullable String value) {
+      this.precipitationType = value;
       return this;
     }
 
@@ -695,35 +662,13 @@ public final class DailyForecast extends Model {
     }
 
     /**
-     * Sets {@link DailyForecast#feelsLikeUtciHigh()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder feelsLikeUtciHigh(@Nullable Quantiles value) {
-      this.feelsLikeUtciHigh = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link DailyForecast#feelsLikeUtciLow()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder feelsLikeUtciLow(@Nullable Quantiles value) {
-      this.feelsLikeUtciLow = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link DailyForecast#totalPrecip()}. Required.
+     * Sets {@link DailyForecast#totalPrecipitation()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder totalPrecip(Quantiles value) {
-      this.totalPrecip = value;
+    public Builder totalPrecipitation(Quantiles value) {
+      this.totalPrecipitation = value;
       return this;
     }
 
@@ -739,24 +684,24 @@ public final class DailyForecast extends Model {
     }
 
     /**
-     * Sets {@link DailyForecast#precipProbability()}. Required.
+     * Sets {@link DailyForecast#precipitationProbability()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder precipProbability(double value) {
-      this.precipProbability = value;
+    public Builder precipitationProbability(double value) {
+      this.precipitationProbability = value;
       return this;
     }
 
     /**
-     * Sets {@link DailyForecast#precipOccurrenceProbability()}. Required.
+     * Sets {@link DailyForecast#precipitationOccurrenceProbability()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder precipOccurrenceProbability(double value) {
-      this.precipOccurrenceProbability = value;
+    public Builder precipitationOccurrenceProbability(double value) {
+      this.precipitationOccurrenceProbability = value;
       return this;
     }
 
@@ -794,13 +739,13 @@ public final class DailyForecast extends Model {
     }
 
     /**
-     * Sets {@link DailyForecast#totalPrecipIfWet()}.
+     * Sets {@link DailyForecast#totalPrecipitationIfWet()}.
      *
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder totalPrecipIfWet(@Nullable Quantiles value) {
-      this.totalPrecipIfWet = value;
+    public Builder totalPrecipitationIfWet(@Nullable Quantiles value) {
+      this.totalPrecipitationIfWet = value;
       return this;
     }
 
@@ -816,13 +761,13 @@ public final class DailyForecast extends Model {
     }
 
     /**
-     * Sets {@link DailyForecast#precipDisplay()}. Required.
+     * Sets {@link DailyForecast#precipitationDisplay()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder precipDisplay(PrecipDisplay value) {
-      this.precipDisplay = value;
+    public Builder precipitationDisplay(PrecipDisplay value) {
+      this.precipitationDisplay = value;
       return this;
     }
 

@@ -13,19 +13,16 @@ import org.jspecify.annotations.Nullable;
 public final class EnsembleStats extends Model {
   private final Quantiles temperature;
   private final @Nullable Quantiles feelsLike;
-  private final @Nullable Quantiles feelsLikeUtci;
   private final @Nullable Quantiles dewpoint;
   private final Quantiles precipitation;
   private final Quantiles windSpeed;
   private final @Nullable Quantiles windGust;
-  private final Quantiles windDirection;
-  private final @Nullable CircularStats windDirectionCircular;
+  private final CircularStats windDirection;
   private final @Nullable Quantiles snowLevel;
   private final @Nullable Quantiles slr;
   private final @Nullable Quantiles snowfall;
   private final @Nullable Quantiles cloudCover;
   private final @Nullable Quantiles skinTemperature;
-  private final @Nullable Quantiles ptype;
   private final @Nullable Quantiles mslp;
   private final @Nullable Quantiles cape;
   private final @Nullable Quantiles relativeHumidity;
@@ -33,19 +30,16 @@ public final class EnsembleStats extends Model {
   private EnsembleStats(Builder b) {
     this.temperature = require(b.temperature, "temperature");
     this.feelsLike = b.feelsLike;
-    this.feelsLikeUtci = b.feelsLikeUtci;
     this.dewpoint = b.dewpoint;
     this.precipitation = require(b.precipitation, "precipitation");
     this.windSpeed = require(b.windSpeed, "wind_speed");
     this.windGust = b.windGust;
     this.windDirection = require(b.windDirection, "wind_direction");
-    this.windDirectionCircular = b.windDirectionCircular;
     this.snowLevel = b.snowLevel;
     this.slr = b.slr;
     this.snowfall = b.snowfall;
     this.cloudCover = b.cloudCover;
     this.skinTemperature = b.skinTemperature;
-    this.ptype = b.ptype;
     this.mslp = b.mslp;
     this.cape = b.cape;
     this.relativeHumidity = b.relativeHumidity;
@@ -69,19 +63,16 @@ public final class EnsembleStats extends Model {
     Builder b = new Builder();
     b.temperature = this.temperature;
     b.feelsLike = this.feelsLike;
-    b.feelsLikeUtci = this.feelsLikeUtci;
     b.dewpoint = this.dewpoint;
     b.precipitation = this.precipitation;
     b.windSpeed = this.windSpeed;
     b.windGust = this.windGust;
     b.windDirection = this.windDirection;
-    b.windDirectionCircular = this.windDirectionCircular;
     b.snowLevel = this.snowLevel;
     b.slr = this.slr;
     b.snowfall = this.snowfall;
     b.cloudCover = this.cloudCover;
     b.skinTemperature = this.skinTemperature;
-    b.ptype = this.ptype;
     b.mslp = this.mslp;
     b.cape = this.cape;
     b.relativeHumidity = this.relativeHumidity;
@@ -108,25 +99,12 @@ public final class EnsembleStats extends Model {
    * within the range of the members' own values. A member with no dewpoint of its own takes the
    * ensemble's mean dewpoint; with no dewpoint at all for the hour, no heat index is applied.
    * Omitted when the hour has no members to compute it from. This is the default index ({@code
-   * feels_like=nws}); see {@code feels_like_utci}.
+   * feels_like=nws}).
    *
    * @return the {@code feels_like} value, or empty when the response omits it
    */
   public Optional<Quantiles> feelsLike() {
     return Optional.ofNullable(feelsLike);
-  }
-
-  /**
-   * The Universal Thermal Climate Index (Bröde et al. 2012), same unit as {@code temperature}, with
-   * a mean radiant temperature from the members' surface radiation, computed per member like {@code
-   * feels_like}. Present only with {@code feels_like=utci} (or {@code nws,utci}), which is NOT
-   * served yet -- a {@code 400 FEELS_LIKE_UNAVAILABLE} until -- so it is absent from every response
-   * today.
-   *
-   * @return the {@code feels_like_utci} value, or empty when the response omits it
-   */
-  public Optional<Quantiles> feelsLikeUtci() {
-    return Optional.ofNullable(feelsLikeUtci);
   }
 
   /**
@@ -170,25 +148,16 @@ public final class EnsembleStats extends Model {
   }
 
   /**
-   * <b>Circular — read this before using any of these numbers.</b> Wind direction is pooled across
-   * models ON THE CIRCLE, so this {@code Quantiles} describes an ARC, not an interval on the number
-   * line:.
+   * The wind direction as a CIRCULAR distribution: the resultant mean bearing, an offset-frame
+   * standard deviation, and the central 50 % and 90 % of the members as clockwise arcs (an arc's
+   * end may be numerically smaller than its start: it crosses north). Degrees in every unit system.
+   * This is the one direction shape -- the linear {@code Quantiles} ladder it replaced was
+   * non-monotone across north, with a mean outside {@code [min, max]}, and.
    *
    * @return the {@code wind_direction} value
    */
-  public Quantiles windDirection() {
+  public CircularStats windDirection() {
     return windDirection;
-  }
-
-  /**
-   * The wind direction as a CIRCULAR distribution: the resultant mean, an offset-frame standard
-   * deviation, and the central 50 % and 90 % of the members as clockwise arcs. Present on every
-   * hour that carries {@code wind_direction}.
-   *
-   * @return the {@code wind_direction_circular} value, or empty when the response omits it
-   */
-  public Optional<CircularStats> windDirectionCircular() {
-    return Optional.ofNullable(windDirectionCircular);
   }
 
   /**
@@ -215,10 +184,9 @@ public final class EnsembleStats extends Model {
    * probability} the chance of measurable snow. An hour whose snowfall was ASSESSED --
    * precipitation, SLR and snow level all present -- and came out dry (the point is below the snow
    * level, the surface is too warm, or the median precipitation is under the drizzle gate) serves a
-   * present zero: every rank {@code 0} and {@code probability} {@code 0}. The field is absent (or
-   * {@code null}) only when an input is missing and the hour could not be assessed, so absent means
-   * "unknown", never "no snow" -- the convention the member plumes' {@code snowfall} already
-   * follows.
+   * present zero: every rank {@code 0} and {@code probability} {@code 0}. The field is absent only
+   * when an input is missing and the hour could not be assessed, so absent means "unknown", never
+   * "no snow" -- the convention the member plumes' {@code snowfall} already follows.
    *
    * @return the {@code snowfall} value, or empty when the response omits it
    */
@@ -238,7 +206,8 @@ public final class EnsembleStats extends Model {
   /**
    * Skin / ground surface temperature in the caller's temperature units. Sourced from IFS ENS
    * {@code skt} — a proxy for snow-surface temperature at ski areas and pavement-approximate
-   * temperature off-road. Null when no model with this variable contributed to this hour's blend.
+   * temperature off-road. Absent when no model with this variable contributed to this hour's blend.
+   * Only with {@code include=skin_temperature}.
    *
    * @return the {@code skin_temperature} value, or empty when the response omits it
    */
@@ -247,24 +216,9 @@ public final class EnsembleStats extends Model {
   }
 
   /**
-   * Present only with {@code ?diagnostics=ptype} (a model-native diagnostic; per-category
-   * probabilities are a follow-up). Model-native precipitation type code (ECMWF {@code ptype}
-   * convention). 1 = rain, 3 = freezing rain, 5 = snow, 6 = wet snow, 7 = mixed, 8 = ice pellets.
-   * Encoded as {@code Quantiles} so ensemble agreement is visible — e.g. {@code p25 == p75 == 5}
-   * means all members agree on snow. Distinct from the derived {@code precip_type} label on {@code
-   * TimeSeriesPoint}, which is a friendlier snow/rain/mix categorization derived from SLR plus snow
-   * level.
-   *
-   * @return the {@code ptype} value, or empty when the response omits it
-   */
-  public Optional<Quantiles> ptype() {
-    return Optional.ofNullable(ptype);
-  }
-
-  /**
    * Mean sea-level pressure: hPa for {@code metric} and {@code kelvin}, inHg for {@code imperial}.
    * A raw blend of the contributing models; no pressure observation trains a correction. Omitted
-   * when no contributing model published it for this hour.
+   * when no contributing model published it for this hour. Only with {@code include=mslp}.
    *
    * @return the {@code mslp} value, or empty when the response omits it
    */
@@ -300,19 +254,16 @@ public final class EnsembleStats extends Model {
     return new Object[] {
       temperature,
       feelsLike,
-      feelsLikeUtci,
       dewpoint,
       precipitation,
       windSpeed,
       windGust,
       windDirection,
-      windDirectionCircular,
       snowLevel,
       slr,
       snowfall,
       cloudCover,
       skinTemperature,
-      ptype,
       mslp,
       cape,
       relativeHumidity
@@ -327,19 +278,16 @@ public final class EnsembleStats extends Model {
   private static final String[] NAMES = {
     "temperature",
     "feelsLike",
-    "feelsLikeUtci",
     "dewpoint",
     "precipitation",
     "windSpeed",
     "windGust",
     "windDirection",
-    "windDirectionCircular",
     "snowLevel",
     "slr",
     "snowfall",
     "cloudCover",
     "skinTemperature",
-    "ptype",
     "mslp",
     "cape",
     "relativeHumidity"
@@ -349,19 +297,16 @@ public final class EnsembleStats extends Model {
   public static final class Builder {
     private @Nullable Quantiles temperature;
     private @Nullable Quantiles feelsLike;
-    private @Nullable Quantiles feelsLikeUtci;
     private @Nullable Quantiles dewpoint;
     private @Nullable Quantiles precipitation;
     private @Nullable Quantiles windSpeed;
     private @Nullable Quantiles windGust;
-    private @Nullable Quantiles windDirection;
-    private @Nullable CircularStats windDirectionCircular;
+    private @Nullable CircularStats windDirection;
     private @Nullable Quantiles snowLevel;
     private @Nullable Quantiles slr;
     private @Nullable Quantiles snowfall;
     private @Nullable Quantiles cloudCover;
     private @Nullable Quantiles skinTemperature;
-    private @Nullable Quantiles ptype;
     private @Nullable Quantiles mslp;
     private @Nullable Quantiles cape;
     private @Nullable Quantiles relativeHumidity;
@@ -387,17 +332,6 @@ public final class EnsembleStats extends Model {
      */
     public Builder feelsLike(@Nullable Quantiles value) {
       this.feelsLike = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link EnsembleStats#feelsLikeUtci()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder feelsLikeUtci(@Nullable Quantiles value) {
-      this.feelsLikeUtci = value;
       return this;
     }
 
@@ -451,19 +385,8 @@ public final class EnsembleStats extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder windDirection(Quantiles value) {
+    public Builder windDirection(CircularStats value) {
       this.windDirection = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link EnsembleStats#windDirectionCircular()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder windDirectionCircular(@Nullable CircularStats value) {
-      this.windDirectionCircular = value;
       return this;
     }
 
@@ -519,17 +442,6 @@ public final class EnsembleStats extends Model {
      */
     public Builder skinTemperature(@Nullable Quantiles value) {
       this.skinTemperature = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link EnsembleStats#ptype()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder ptype(@Nullable Quantiles value) {
-      this.ptype = value;
       return this;
     }
 

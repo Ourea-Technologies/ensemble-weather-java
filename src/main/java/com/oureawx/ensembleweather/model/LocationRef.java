@@ -2,6 +2,7 @@
 package com.oureawx.ensembleweather.model;
 
 import java.time.ZoneId;
+import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -12,23 +13,23 @@ import org.jspecify.annotations.Nullable;
  * responses into it. Wire schema: {@code LocationRef}.
  */
 public final class LocationRef extends Model {
-  private final String slug;
+  private final @Nullable String slug;
   private final String state;
   private final String name;
   private final double lat;
   private final double lon;
   private final double elevationM;
-  private final String type;
+  private final @Nullable String type;
   private final ZoneId timezone;
 
   private LocationRef(Builder b) {
-    this.slug = require(b.slug, "slug");
+    this.slug = b.slug;
     this.state = require(b.state, "state");
     this.name = require(b.name, "name");
     this.lat = require(b.lat, "lat");
     this.lon = require(b.lon, "lon");
     this.elevationM = require(b.elevationM, "elevation_m");
-    this.type = require(b.type, "type");
+    this.type = b.type;
     this.timezone = require(b.timezone, "timezone");
   }
 
@@ -61,12 +62,14 @@ public final class LocationRef extends Model {
 
   /**
    * The location's key: its catalog slug. With {@code state}, the URL {@code
-   * /api/v1/locations/(state)/(slug)}; what a favorite stores.
+   * /api/v1/locations/(state)/(slug)}; what a favorite stores. {@code Null} on a coordinate
+   * forecast ({@code GET /api/v1/forecast}, {@code /current}, {@code /alerts} by {@code lat}/{@code
+   * lon}), which names no catalog place.
    *
-   * @return the {@code slug} value
+   * @return the {@code slug} value, or empty when the response omits it
    */
-  public String slug() {
-    return slug;
+  public Optional<String> slug() {
+    return Optional.ofNullable(slug);
   }
 
   /**
@@ -115,22 +118,22 @@ public final class LocationRef extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case. {@code Null} on a coordinate forecast.
    *
-   * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
-   *     not know)
+   * @return the {@code type} value, or empty when the response omits it ({@link
+   *     LocationType#UNKNOWN} for a value this SDK version does not know)
    */
-  public LocationType type() {
-    return LocationType.fromWireValue(type);
+  public Optional<LocationType> type() {
+    return Optional.ofNullable(type).map(LocationType::fromWireValue);
   }
 
   /**
    * The {@code type} value exactly as the API sent it, even when this SDK version does not know it.
    *
-   * @return the raw {@code type} string
+   * @return the raw {@code type} string, or empty when absent
    */
-  public String typeAsString() {
-    return type;
+  public Optional<String> typeAsString() {
+    return Optional.ofNullable(type);
   }
 
   /**
@@ -171,12 +174,12 @@ public final class LocationRef extends Model {
     private Builder() {}
 
     /**
-     * Sets {@link LocationRef#slug()}. Required.
+     * Sets {@link LocationRef#slug()}.
      *
-     * @param value the value
+     * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder slug(String value) {
+    public Builder slug(@Nullable String value) {
       this.slug = value;
       return this;
     }
@@ -237,13 +240,13 @@ public final class LocationRef extends Model {
     }
 
     /**
-     * Sets {@link LocationRef#type()}. Required.
+     * Sets {@link LocationRef#type()}.
      *
-     * @param value the value
+     * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder type(LocationType value) {
-      this.type = wire(value.wireValue());
+    public Builder type(@Nullable LocationType value) {
+      this.type = value == null ? null : wire(value.wireValue());
       return this;
     }
 
@@ -251,10 +254,10 @@ public final class LocationRef extends Model {
      * Sets {@link LocationRef#typeAsString()}, the raw wire value, kept verbatim even when this SDK
      * version does not know it.
      *
-     * @param value the raw value
+     * @param value the raw value, or null for absent
      * @return this builder
      */
-    public Builder typeAsString(String value) {
+    public Builder typeAsString(@Nullable String value) {
       this.type = value;
       return this;
     }

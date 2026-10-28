@@ -15,12 +15,14 @@ public final class RunsResponse extends Model {
   private final @Nullable ServedRun served;
   private final List<RunInfo> runs;
   private final int count;
+  private final @Nullable String nextCursor;
   private final ResponseMetadata metadata;
 
   private RunsResponse(Builder b) {
     this.served = b.served;
     this.runs = List.copyOf(b.runs);
     this.count = require(b.count, "count");
+    this.nextCursor = b.nextCursor;
     this.metadata = b.metadata;
   }
 
@@ -43,6 +45,7 @@ public final class RunsResponse extends Model {
     b.served = this.served;
     b.runs = this.runs;
     b.count = this.count;
+    b.nextCursor = this.nextCursor;
     b.metadata = this.metadata;
     return b;
   }
@@ -75,6 +78,15 @@ public final class RunsResponse extends Model {
   }
 
   /**
+   * The {@code next_cursor} value.
+   *
+   * @return the {@code next_cursor} value, or empty when the response omits it
+   */
+  public Optional<String> nextCursor() {
+    return Optional.ofNullable(nextCursor);
+  }
+
+  /**
    * What the HTTP exchange said about this response: rate-limit state, request id, and whether it
    * was revalidated from the local cache. Not part of {@link #equals(Object)}.
    *
@@ -86,7 +98,7 @@ public final class RunsResponse extends Model {
 
   @Override
   Object[] values() {
-    return new Object[] {served, runs, count};
+    return new Object[] {served, runs, count, nextCursor};
   }
 
   @Override
@@ -94,13 +106,14 @@ public final class RunsResponse extends Model {
     return NAMES;
   }
 
-  private static final String[] NAMES = {"served", "runs", "count"};
+  private static final String[] NAMES = {"served", "runs", "count", "nextCursor"};
 
   /** Builds a {@link RunsResponse}. */
   public static final class Builder {
     private @Nullable ServedRun served;
     private List<RunInfo> runs = List.of();
     private @Nullable Integer count;
+    private @Nullable String nextCursor;
     private ResponseMetadata metadata = ResponseMetadata.none();
 
     private Builder() {}
@@ -135,6 +148,17 @@ public final class RunsResponse extends Model {
      */
     public Builder count(int value) {
       this.count = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link RunsResponse#nextCursor()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder nextCursor(@Nullable String value) {
+      this.nextCursor = value;
       return this;
     }
 

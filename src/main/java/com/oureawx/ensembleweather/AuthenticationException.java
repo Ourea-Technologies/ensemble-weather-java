@@ -22,4 +22,24 @@ public final class AuthenticationException extends EnsembleWeatherException {
       String message, int status, @Nullable String code, @Nullable String requestId) {
     super(ErrorCategory.AUTHENTICATION, message, status, code, requestId, null);
   }
+
+  /**
+   * Creates the exception with the error body's documentation link and parameter.
+   *
+   * @param message the human-readable detail
+   * @param status the HTTP status
+   * @param code the API's error code, or null
+   * @param requestId the request id, or null
+   * @param docUrl the body's {@code doc_url}, or null
+   * @param param the body's {@code param}, or null
+   */
+  public AuthenticationException(
+      String message,
+      int status,
+      @Nullable String code,
+      @Nullable String requestId,
+      @Nullable String docUrl,
+      @Nullable String param) {
+    super(ErrorCategory.AUTHENTICATION, message, status, code, requestId, docUrl, param, null);
+  }
 }

@@ -40,7 +40,6 @@ public final class CatalogLocationDetail extends Model {
   private final List<CatalogNearbyStation> nearbyStations;
   private final @Nullable CatalogTemplateSummary template;
   private final List<CatalogResolvedEntry> content;
-  private final List<CatalogResolvedAdSlot> ads;
   private final ResponseMetadata metadata;
 
   private CatalogLocationDetail(Builder b) {
@@ -71,7 +70,6 @@ public final class CatalogLocationDetail extends Model {
     this.nearbyStations = List.copyOf(b.nearbyStations);
     this.template = b.template;
     this.content = List.copyOf(b.content);
-    this.ads = List.copyOf(b.ads);
     this.metadata = b.metadata;
   }
 
@@ -118,7 +116,6 @@ public final class CatalogLocationDetail extends Model {
     b.nearbyStations = this.nearbyStations;
     b.template = this.template;
     b.content = this.content;
-    b.ads = this.ads;
     b.metadata = this.metadata;
     return b;
   }
@@ -179,11 +176,21 @@ public final class CatalogLocationDetail extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
-   * @return the {@code type} value
+   * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
+   *     not know)
    */
-  public String type() {
+  public LocationType type() {
+    return LocationType.fromWireValue(type);
+  }
+
+  /**
+   * The {@code type} value exactly as the API sent it, even when this SDK version does not know it.
+   *
+   * @return the raw {@code type} string
+   */
+  public String typeAsString() {
     return type;
   }
 
@@ -369,15 +376,6 @@ public final class CatalogLocationDetail extends Model {
   }
 
   /**
-   * The {@code ads} value.
-   *
-   * @return the {@code ads} values; empty when the response has none
-   */
-  public List<CatalogResolvedAdSlot> ads() {
-    return ads;
-  }
-
-  /**
    * What the HTTP exchange said about this response: rate-limit state, request id, and whether it
    * was revalidated from the local cache. Not part of {@link #equals(Object)}.
    *
@@ -416,8 +414,7 @@ public final class CatalogLocationDetail extends Model {
       webcams,
       nearbyStations,
       template,
-      content,
-      ads
+      content
     };
   }
 
@@ -453,8 +450,7 @@ public final class CatalogLocationDetail extends Model {
     "webcams",
     "nearbyStations",
     "template",
-    "content",
-    "ads"
+    "content"
   };
 
   /** Builds a {@link CatalogLocationDetail}. */
@@ -486,7 +482,6 @@ public final class CatalogLocationDetail extends Model {
     private List<CatalogNearbyStation> nearbyStations = List.of();
     private @Nullable CatalogTemplateSummary template;
     private List<CatalogResolvedEntry> content = List.of();
-    private List<CatalogResolvedAdSlot> ads = List.of();
     private ResponseMetadata metadata = ResponseMetadata.none();
 
     private Builder() {}
@@ -563,7 +558,19 @@ public final class CatalogLocationDetail extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder type(String value) {
+    public Builder type(LocationType value) {
+      this.type = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogLocationDetail#typeAsString()}, the raw wire value, kept verbatim even
+     * when this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder typeAsString(String value) {
       this.type = value;
       return this;
     }
@@ -785,17 +792,6 @@ public final class CatalogLocationDetail extends Model {
      */
     public Builder content(List<CatalogResolvedEntry> values) {
       this.content = List.copyOf(values);
-      return this;
-    }
-
-    /**
-     * Sets {@link CatalogLocationDetail#ads()}.
-     *
-     * @param values the values
-     * @return this builder
-     */
-    public Builder ads(List<CatalogResolvedAdSlot> values) {
-      this.ads = List.copyOf(values);
       return this;
     }
 

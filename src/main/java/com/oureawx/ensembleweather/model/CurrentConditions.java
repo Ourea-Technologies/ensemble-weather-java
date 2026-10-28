@@ -27,7 +27,7 @@ public final class CurrentConditions extends Model {
   private final double windDirection;
   private final @Nullable Double relativeHumidity;
   private final @Nullable Double dewpoint;
-  private final @Nullable Double precipProbability;
+  private final @Nullable Double precipitationProbability;
   private final String source;
   private final @Nullable CurrentStation station;
 
@@ -43,7 +43,7 @@ public final class CurrentConditions extends Model {
     this.windDirection = require(b.windDirection, "wind_direction");
     this.relativeHumidity = b.relativeHumidity;
     this.dewpoint = b.dewpoint;
-    this.precipProbability = b.precipProbability;
+    this.precipitationProbability = b.precipitationProbability;
     this.source = require(b.source, "source");
     this.station = b.station;
   }
@@ -75,7 +75,7 @@ public final class CurrentConditions extends Model {
     b.windDirection = this.windDirection;
     b.relativeHumidity = this.relativeHumidity;
     b.dewpoint = this.dewpoint;
-    b.precipProbability = this.precipProbability;
+    b.precipitationProbability = this.precipitationProbability;
     b.source = this.source;
     b.station = this.station;
     return b;
@@ -141,11 +141,11 @@ public final class CurrentConditions extends Model {
   /**
    * The {@code condition_icon} value.
    *
-   * @return the {@code condition_icon} value ({@link HourlyIcon#UNKNOWN} for a value this SDK
+   * @return the {@code condition_icon} value ({@link ConditionIcon#UNKNOWN} for a value this SDK
    *     version does not know)
    */
-  public HourlyIcon conditionIcon() {
-    return HourlyIcon.fromWireValue(conditionIcon);
+  public ConditionIcon conditionIcon() {
+    return ConditionIcon.fromWireValue(conditionIcon);
   }
 
   /**
@@ -204,14 +204,15 @@ public final class CurrentConditions extends Model {
   }
 
   /**
-   * Probability (0–1) of at least a 0.1 mm trace in the hour.
+   * Probability (0–1) of at least 0.254 mm (0.01 in, the NWS measurable event) in the hour: {@code
+   * ensemble.precipitation.probability} of the hour.
    *
-   * @return the {@code precip_probability} value, or empty when the response omits it
+   * @return the {@code precipitation_probability} value, or empty when the response omits it
    */
-  public OptionalDouble precipProbability() {
-    return precipProbability == null
+  public OptionalDouble precipitationProbability() {
+    return precipitationProbability == null
         ? OptionalDouble.empty()
-        : OptionalDouble.of(precipProbability);
+        : OptionalDouble.of(precipitationProbability);
   }
 
   /**
@@ -260,7 +261,7 @@ public final class CurrentConditions extends Model {
       windDirection,
       relativeHumidity,
       dewpoint,
-      precipProbability,
+      precipitationProbability,
       source,
       station
     };
@@ -283,7 +284,7 @@ public final class CurrentConditions extends Model {
     "windDirection",
     "relativeHumidity",
     "dewpoint",
-    "precipProbability",
+    "precipitationProbability",
     "source",
     "station"
   };
@@ -301,7 +302,7 @@ public final class CurrentConditions extends Model {
     private @Nullable Double windDirection;
     private @Nullable Double relativeHumidity;
     private @Nullable Double dewpoint;
-    private @Nullable Double precipProbability;
+    private @Nullable Double precipitationProbability;
     private @Nullable String source;
     private @Nullable CurrentStation station;
 
@@ -380,7 +381,7 @@ public final class CurrentConditions extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder conditionIcon(HourlyIcon value) {
+    public Builder conditionIcon(ConditionIcon value) {
       this.conditionIcon = wire(value.wireValue());
       return this;
     }
@@ -453,13 +454,13 @@ public final class CurrentConditions extends Model {
     }
 
     /**
-     * Sets {@link CurrentConditions#precipProbability()}.
+     * Sets {@link CurrentConditions#precipitationProbability()}.
      *
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder precipProbability(@Nullable Double value) {
-      this.precipProbability = value;
+    public Builder precipitationProbability(@Nullable Double value) {
+      this.precipitationProbability = value;
       return this;
     }
 

@@ -128,7 +128,7 @@ public final class NearbyLocation extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
    * @return the {@code type} value
    */

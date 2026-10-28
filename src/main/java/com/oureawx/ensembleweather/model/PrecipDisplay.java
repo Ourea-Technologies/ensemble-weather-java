@@ -6,10 +6,10 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A day's precipitation headline, chosen by the server so every client says the same thing: {@code
- * kind} {@code none} when the chance of a wet day ({@code precip_occurrence_probability}) is under
- * 15 %, else the day's {@code precip_type}; {@code chance} that chance; {@code amount} the median
- * amount if wet ({@code total_snowfall_if_wet.p50} for snow, {@code total_precip_if_wet.p50}
- * otherwise).
+ * kind} {@code none} when the chance of a wet day ({@code precipitation_occurrence_probability}) is
+ * under 15 %, else the day's {@code precipitation_type}; {@code chance} that chance; {@code amount}
+ * the median amount if wet ({@code total_snowfall_if_wet.p50} for snow, {@code
+ * total_precipitation_if_wet.p50} otherwise).
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code PrecipDisplay}.

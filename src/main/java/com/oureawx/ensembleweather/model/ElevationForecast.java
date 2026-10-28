@@ -18,7 +18,9 @@ import org.jspecify.annotations.Nullable;
  * corrections are the primary's. Precipitation and snowfall are carried from the primary's
  * elevation by the local PRISM precipitation–elevation regression (see {@code
  * provenance.lapse_prism}). Wind and snow level are the forecast at those coordinates — no
- * elevation multiplier is applied to them. The location's own point is never repeated here.
+ * elevation multiplier is applied to them. The location's own point is never repeated here. The
+ * legacy compact {@code timeseries} points and the {@code default} flag are gone -- read {@code
+ * hourly}.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code ElevationForecast}.
@@ -26,10 +28,8 @@ import org.jspecify.annotations.Nullable;
 public final class ElevationForecast extends Model {
   private final String name;
   private final double elevation;
-  private final @Nullable Boolean isDefault;
   private final double lat;
   private final double lon;
-  private final List<ElevationTimeSeriesPoint> timeseries;
   private final List<TimeSeriesPoint> hourly;
   private final List<DailyForecast> daily;
   private final @Nullable SnowOutlook snowOutlook;
@@ -37,10 +37,8 @@ public final class ElevationForecast extends Model {
   private ElevationForecast(Builder b) {
     this.name = require(b.name, "name");
     this.elevation = require(b.elevation, "elevation");
-    this.isDefault = b.isDefault;
     this.lat = require(b.lat, "lat");
     this.lon = require(b.lon, "lon");
-    this.timeseries = List.copyOf(b.timeseries);
     this.hourly = List.copyOf(b.hourly);
     this.daily = List.copyOf(b.daily);
     this.snowOutlook = b.snowOutlook;
@@ -64,10 +62,8 @@ public final class ElevationForecast extends Model {
     Builder b = new Builder();
     b.name = this.name;
     b.elevation = this.elevation;
-    b.isDefault = this.isDefault;
     b.lat = this.lat;
     b.lon = this.lon;
-    b.timeseries = this.timeseries;
     b.hourly = this.hourly;
     b.daily = this.daily;
     b.snowOutlook = this.snowOutlook;
@@ -93,15 +89,6 @@ public final class ElevationForecast extends Model {
   }
 
   /**
-   * Whether this is the default elevation to show in the UI.
-   *
-   * @return the {@code default} value, or empty when the response omits it
-   */
-  public Optional<Boolean> isDefault() {
-    return Optional.ofNullable(isDefault);
-  }
-
-  /**
    * Where this elevation was forecast — its own coordinates when the catalog has them, else the
    * location's.
    *
@@ -118,21 +105,6 @@ public final class ElevationForecast extends Model {
    */
   public double lon() {
     return lon;
-  }
-
-  /**
-   * LEGACY compact hourly points, derived from {@code hourly} (kept for clients that read only
-   * these; new clients should read {@code hourly}). Each also carries the hour's {@code
-   * precipitation}, {@code condition} and {@code condition_icon} -- the same values as the {@code
-   * hourly} hour at that {@code valid_time}, so an hour's precipitation type ({@code
-   * snow_level_delta}) can be shown only when something is likely to fall. Omitted with {@code
-   * hourly=false}. Carries the same gaps as the primary {@code forecast.timeseries} — a refused
-   * hour is absent here too — so key on {@code valid_time}, not position.
-   *
-   * @return the {@code timeseries} values; empty when the response has none
-   */
-  public List<ElevationTimeSeriesPoint> timeseries() {
-    return timeseries;
   }
 
   /**
@@ -172,9 +144,7 @@ public final class ElevationForecast extends Model {
 
   @Override
   Object[] values() {
-    return new Object[] {
-      name, elevation, isDefault, lat, lon, timeseries, hourly, daily, snowOutlook
-    };
+    return new Object[] {name, elevation, lat, lon, hourly, daily, snowOutlook};
   }
 
   @Override
@@ -183,17 +153,15 @@ public final class ElevationForecast extends Model {
   }
 
   private static final String[] NAMES = {
-    "name", "elevation", "isDefault", "lat", "lon", "timeseries", "hourly", "daily", "snowOutlook"
+    "name", "elevation", "lat", "lon", "hourly", "daily", "snowOutlook"
   };
 
   /** Builds a {@link ElevationForecast}. */
   public static final class Builder {
     private @Nullable String name;
     private @Nullable Double elevation;
-    private @Nullable Boolean isDefault;
     private @Nullable Double lat;
     private @Nullable Double lon;
-    private List<ElevationTimeSeriesPoint> timeseries = List.of();
     private List<TimeSeriesPoint> hourly = List.of();
     private List<DailyForecast> daily = List.of();
     private @Nullable SnowOutlook snowOutlook;
@@ -223,17 +191,6 @@ public final class ElevationForecast extends Model {
     }
 
     /**
-     * Sets {@link ElevationForecast#isDefault()}.
-     *
-     * @param value the value, or null for absent
-     * @return this builder
-     */
-    public Builder isDefault(@Nullable Boolean value) {
-      this.isDefault = value;
-      return this;
-    }
-
-    /**
      * Sets {@link ElevationForecast#lat()}. Required.
      *
      * @param value the value
@@ -252,17 +209,6 @@ public final class ElevationForecast extends Model {
      */
     public Builder lon(double value) {
       this.lon = value;
-      return this;
-    }
-
-    /**
-     * Sets {@link ElevationForecast#timeseries()}.
-     *
-     * @param values the values
-     * @return this builder
-     */
-    public Builder timeseries(List<ElevationTimeSeriesPoint> values) {
-      this.timeseries = List.copyOf(values);
       return this;
     }
 

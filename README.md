@@ -153,8 +153,13 @@ probability from them: the server computes every probability and window total
 from the full ensemble (summing hourly quantiles gives a wrong storm total).
 Thresholds you give in another unit (`Threshold.inches(6)` on a metric
 request) are converted exactly before sending; response values are always in
-the request's units. Answers come back in the order you asked, and an empty
-`probability()` means the forecast does not reach the window's end, never 0.
+the request's units. Answers are matched to your terms by the `term()` the
+server echoes and come back in the order you asked; an empty `probability()`
+is never 0, and `nullReason()` says why (`WINDOW_NOT_COVERED`,
+`TOO_FEW_MEMBERS`, `VARIABLE_UNAVAILABLE`). Wind direction is circular: each
+hour's `ensemble().windDirection()` is a `CircularStats` (mean, spread and the
+clockwise 50 % and 90 % sectors, whose `to` may be numerically less than
+`from`), not quantiles.
 More at [docs.oureawx.com/concepts/probabilities](https://docs.oureawx.com/concepts/probabilities).
 
 ## More examples
@@ -179,15 +184,18 @@ Every operation also has an `...Async` twin returning a `CompletableFuture`
 
 Every exception is an unchecked `EnsembleWeatherException` with a stable
 `category()`. HTTP errors carry `status()`, `code()` (verbatim, even when new),
-`getMessage()` and `requestId()`; `RateLimitException` adds `retryAfter()`:
+`getMessage()`, `requestId()`, `docUrl()` (the code's entry on the docs errors
+page) and, on a 400 about one parameter, `param()`; `RateLimitException` adds
+`retryAfter()`, and a `PRO_REQUIRED` from a coordinate route may name a
+`nearestLocation()` that answers without a key:
 
 | Class                      | Category           | When                                                               |
 | -------------------------- | ------------------ | ------------------------------------------------------------------ |
 | `AuthenticationException`  | `AUTHENTICATION`   | invalid or missing key (401)                                       |
 | `PermissionException`      | `PERMISSION`       | your plan does not allow it, such as `PRO_REQUIRED` (403)          |
-| `NotFoundException`        | `NOT_FOUND`        | no such location, run or report (404, 410)                         |
+| `NotFoundException`        | `NOT_FOUND`        | no such location or route (404, 410)                               |
 | `InvalidRequestException`  | `INVALID_REQUEST`  | the server rejected a parameter (400)                              |
-| `OutsideCoverageException` | `OUTSIDE_COVERAGE` | `OUTSIDE_COVERAGE`: the point is outside the domain                |
+| `OutsideCoverageException` | `OUTSIDE_COVERAGE` | `OUTSIDE_COVERAGE` (404): the point is outside the domain          |
 | `RateLimitException`       | `RATE_LIMITED`     | over a budget (429)                                                |
 | `UnavailableException`     | `UNAVAILABLE`      | the server could not answer (5xx), or sent a body off-contract     |
 | `ConnectionException`      | `CONNECTION`       | no response: DNS, TLS, reset, or the 30 s per-attempt timeout      |
@@ -203,7 +211,7 @@ try {
 
 Connection errors (except TLS verification failures), 429, 502, 503 and 504
 are retried up to `maxRetries` (default 2) times, waiting exactly `Retry-After`
-when the server sends one of 60 s or less (more than that is returned at once
+(sent on 429, 503 and 504) when the server sends one of 60 s or less (more than that is returned at once
 as the exception), else full-jitter backoff from 0.5 s up to 8 s. Nothing else
 is retried.
 

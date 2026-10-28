@@ -7,12 +7,14 @@ import java.util.OptionalDouble;
 import org.jspecify.annotations.Nullable;
 
 /**
- * One {@code ?prob=} term, answered.
+ * One {@code ?prob=} term, answered. Every field is always present (null where it has no value);
+ * match an answer to its request term by {@code term}.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code ProbabilityResult}.
  */
 public final class ProbabilityResult extends Model {
+  private final String term;
   private final String variable;
   private final String op;
   private final double threshold;
@@ -23,8 +25,10 @@ public final class ProbabilityResult extends Model {
   private final @Nullable Instant to;
   private final @Nullable Double probability;
   private final int members;
+  private final @Nullable String nullReason;
 
   private ProbabilityResult(Builder b) {
+    this.term = require(b.term, "term");
     this.variable = require(b.variable, "variable");
     this.op = require(b.op, "op");
     this.threshold = require(b.threshold, "threshold");
@@ -35,6 +39,7 @@ public final class ProbabilityResult extends Model {
     this.to = b.to;
     this.probability = b.probability;
     this.members = require(b.members, "members");
+    this.nullReason = b.nullReason;
   }
 
   /**
@@ -53,6 +58,7 @@ public final class ProbabilityResult extends Model {
    */
   public Builder toBuilder() {
     Builder b = new Builder();
+    b.term = this.term;
     b.variable = this.variable;
     b.op = this.op;
     b.threshold = this.threshold;
@@ -63,7 +69,19 @@ public final class ProbabilityResult extends Model {
     b.to = this.to;
     b.probability = this.probability;
     b.members = this.members;
+    b.nullReason = this.nullReason;
     return b;
+  }
+
+  /**
+   * The term's canonical spelling (threshold at the variable's served precision in the request's
+   * units, {@code <N>h} for a window from 0, no default aggregation) -- the key to match the
+   * request term by, whatever order or spelling it was sent in.
+   *
+   * @return the {@code term} value
+   */
+  public String term() {
+    return term;
   }
 
   /**
@@ -190,9 +208,30 @@ public final class ProbabilityResult extends Model {
     return members;
   }
 
+  /**
+   * Why {@code probability} is {@code null}; {@code null} when it is not.
+   *
+   * @return the {@code null_reason} value, or empty when the response omits it ({@link
+   *     NullReason#UNKNOWN} for a value this SDK version does not know)
+   */
+  public Optional<NullReason> nullReason() {
+    return Optional.ofNullable(nullReason).map(NullReason::fromWireValue);
+  }
+
+  /**
+   * The {@code null_reason} value exactly as the API sent it, even when this SDK version does not
+   * know it.
+   *
+   * @return the raw {@code null_reason} string, or empty when absent
+   */
+  public Optional<String> nullReasonAsString() {
+    return Optional.ofNullable(nullReason);
+  }
+
   @Override
   Object[] values() {
     return new Object[] {
+      term,
       variable,
       op,
       threshold,
@@ -202,7 +241,8 @@ public final class ProbabilityResult extends Model {
       from,
       to,
       probability,
-      members
+      members,
+      nullReason
     };
   }
 
@@ -212,6 +252,7 @@ public final class ProbabilityResult extends Model {
   }
 
   private static final String[] NAMES = {
+    "term",
     "variable",
     "op",
     "threshold",
@@ -221,11 +262,13 @@ public final class ProbabilityResult extends Model {
     "from",
     "to",
     "probability",
-    "members"
+    "members",
+    "nullReason"
   };
 
   /** Builds a {@link ProbabilityResult}. */
   public static final class Builder {
+    private @Nullable String term;
     private @Nullable String variable;
     private @Nullable String op;
     private @Nullable Double threshold;
@@ -236,8 +279,20 @@ public final class ProbabilityResult extends Model {
     private @Nullable Instant to;
     private @Nullable Double probability;
     private @Nullable Integer members;
+    private @Nullable String nullReason;
 
     private Builder() {}
+
+    /**
+     * Sets {@link ProbabilityResult#term()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder term(String value) {
+      this.term = value;
+      return this;
+    }
 
     /**
      * Sets {@link ProbabilityResult#variable()}. Required.
@@ -382,6 +437,29 @@ public final class ProbabilityResult extends Model {
      */
     public Builder members(int value) {
       this.members = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link ProbabilityResult#nullReason()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder nullReason(@Nullable NullReason value) {
+      this.nullReason = value == null ? null : wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link ProbabilityResult#nullReasonAsString()}, the raw wire value, kept verbatim even
+     * when this SDK version does not know it.
+     *
+     * @param value the raw value, or null for absent
+     * @return this builder
+     */
+    public Builder nullReasonAsString(@Nullable String value) {
+      this.nullReason = value;
       return this;
     }
 

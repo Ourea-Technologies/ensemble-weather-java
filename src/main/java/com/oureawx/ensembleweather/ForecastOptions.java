@@ -46,7 +46,7 @@ public final class ForecastOptions {
   private final List<ProbabilityTerm> probabilities;
   private final List<TotalTerm> totals;
   private final Set<Diagnostic> diagnostics;
-  private final Set<FeelsLikeIndex> feelsLike;
+  private final Set<ForecastInclude> include;
 
   private ForecastOptions(Builder b) {
     units = b.units;
@@ -65,7 +65,7 @@ public final class ForecastOptions {
     probabilities = List.copyOf(b.probabilities);
     totals = List.copyOf(b.totals);
     diagnostics = b.diagnostics.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(b.diagnostics));
-    feelsLike = b.feelsLike.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(b.feelsLike));
+    include = b.include.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(b.include));
   }
 
   /**
@@ -122,12 +122,12 @@ public final class ForecastOptions {
       }
       q.csv("diagnostics", names);
     }
-    if (!feelsLike.isEmpty() && !feelsLike.equals(Set.of(FeelsLikeIndex.NWS))) {
+    if (!include.isEmpty()) {
       List<String> names = new ArrayList<>();
-      for (FeelsLikeIndex f : EnumSet.copyOf(feelsLike)) {
-        names.add(f.wireValue());
+      for (ForecastInclude i : EnumSet.copyOf(include)) {
+        names.add(i.wireValue());
       }
-      q.csv("feels_like", names);
+      q.csv("include", names);
     }
   }
 
@@ -149,7 +149,7 @@ public final class ForecastOptions {
     private final List<ProbabilityTerm> probabilities = new ArrayList<>();
     private final List<TotalTerm> totals = new ArrayList<>();
     private Set<Diagnostic> diagnostics = Set.of();
-    private Set<FeelsLikeIndex> feelsLike = Set.of();
+    private Set<ForecastInclude> include = Set.of();
 
     private Builder() {}
 
@@ -377,13 +377,14 @@ public final class ForecastOptions {
     }
 
     /**
-     * Which "feels like" indices to serve ({@code feels_like}, default NWS).
+     * Opt-in forecast variables ({@code include}): {@code ensemble.mslp} and {@code
+     * ensemble.skin_temperature} are served only when asked for.
      *
-     * @param indices the indices
+     * @param variables the variables
      * @return this builder
      */
-    public Builder feelsLike(FeelsLikeIndex... indices) {
-      this.feelsLike = Set.copyOf(Arrays.asList(indices));
+    public Builder include(ForecastInclude... variables) {
+      this.include = Set.copyOf(Arrays.asList(variables));
       return this;
     }
 

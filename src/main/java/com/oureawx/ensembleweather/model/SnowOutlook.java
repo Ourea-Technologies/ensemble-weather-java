@@ -6,15 +6,16 @@ import java.util.OptionalDouble;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Snow accumulation totals for common UI windows. Values follow the request's {@code units} param
- * (mm metric, inches imperial). Every total is the sum of the hourly snowfall MEANS over its window
- * (changed 2026-09-24 from summed medians): the mean is the only statistic that adds across hours,
- * and it is what every client sums, so {@code next_24h} equals the sum of {@code timeseries[0..24]}
- * snowfall means. Pair with {@code daily[].snow_probability} for occurrence. The windows open at
- * the first served hour and are read from the forecast whatever {@code max_hours} or {@code
- * max_days} is. A window the forecast does not reach (the model run ends before it closes) is
- * {@code null} -- never the shorter sum of the hours there are, which was served as the whole
- * window.
+ * Snow accumulation totals for common UI windows, computed on the server. Values follow the
+ * request's {@code units} param (mm metric, inches imperial). Each total is the ensemble MEAN of
+ * the window's snowfall: the sum of the hourly snowfall means over the window, which is the mean of
+ * the members' own window totals -- means add across hours, no other statistic does. For the
+ * window's RANGE read {@code quantiles} (the percentiles of each member's own window total), never
+ * a sum of hourly percentiles; there is nothing to add up client-side. Pair with {@code
+ * daily[].snow_probability} for occurrence. The windows open at the first served hour and are read
+ * from the forecast whatever {@code max_hours} or {@code max_days} is. A window the forecast does
+ * not reach (the model run ends before it closes) is {@code null} -- never the shorter sum of the
+ * hours there are, which was served as the whole window.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code SnowOutlook}.
@@ -88,9 +89,9 @@ public final class SnowOutlook extends Model {
 
   /**
    * Snow expected overnight, local 16:00 today → 09:00 tomorrow: the sum of the hourly snowfall
-   * means in the window, read from the forecast whatever {@code max_hours} is. Null when the window
-   * isn't covered by the model run, with {@code nowcast=false} (it is wall-clock-anchored), and
-   * null when any hour inside the window was refused — a fixed window summed across a gap
+   * means in the window, read from the forecast whatever {@code max_hours} is. Absent when the
+   * window isn't covered by the model run, with {@code nowcast=false} (it is wall-clock-anchored),
+   * and when any hour inside the window was refused — a fixed window summed across a gap
    * under-counts by exactly the missing hours while still looking complete, so the headline is
    * withheld instead.
    *

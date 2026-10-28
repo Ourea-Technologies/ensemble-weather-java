@@ -70,9 +70,8 @@ public final class ModelRunInfo extends Model {
 
   /**
    * One entry per contributing model, in the order {@code aifs}, {@code aigefs}, {@code gefs},
-   * {@code ifs_ens}, {@code rrfs} (a model added later follows, by id). It replaces {@code
-   * aifs_members}..{@code rrfs_members}, the {@code source_models} CSV and the {@code model_cycles}
-   * map: a new model is a new element, never a new key. A model that contributed nothing is absent.
+   * {@code ifs_ens}, {@code rrfs} (a model added later follows, by id): a new model is a new
+   * element, never a new key. A model that contributed nothing is absent.
    *
    * @return the {@code models} values; empty when the response has none
    */

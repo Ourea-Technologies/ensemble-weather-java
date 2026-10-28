@@ -6,8 +6,7 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The day's sun and moon, grouped (they were flat keys on the daily row, beside a zodiac sign that
- * is no longer served).
+ * The day's sun and moon, grouped.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code DailyAstro}.

@@ -21,7 +21,7 @@ public final class TimeSeriesPoint extends Model {
   private final String conditionText;
   private final String conditionIcon;
   private final @Nullable Boolean gustNotable;
-  private final @Nullable PrecipType precipType;
+  private final @Nullable PrecipType precipitationType;
   private final @Nullable InversionInfo inversion;
   private final @Nullable FreezingLevel freezingLevel;
   private final EnsembleStats ensemble;
@@ -40,7 +40,7 @@ public final class TimeSeriesPoint extends Model {
     this.conditionText = require(b.conditionText, "condition_text");
     this.conditionIcon = require(b.conditionIcon, "condition_icon");
     this.gustNotable = b.gustNotable;
-    this.precipType = b.precipType;
+    this.precipitationType = b.precipitationType;
     this.inversion = b.inversion;
     this.freezingLevel = b.freezingLevel;
     this.ensemble = require(b.ensemble, "ensemble");
@@ -75,7 +75,7 @@ public final class TimeSeriesPoint extends Model {
     b.conditionText = this.conditionText;
     b.conditionIcon = this.conditionIcon;
     b.gustNotable = this.gustNotable;
-    b.precipType = this.precipType;
+    b.precipitationType = this.precipitationType;
     b.inversion = this.inversion;
     b.freezingLevel = this.freezingLevel;
     b.ensemble = this.ensemble;
@@ -116,9 +116,10 @@ public final class TimeSeriesPoint extends Model {
   }
 
   /**
-   * A stable machine code to switch on -- the display text ({@code condition_text}) lowercased,
-   * each run of other characters one {@code _} ({@code partly_cloudy}, {@code
-   * rain_snow_mix_likely}). Treat unknown codes as additive.
+   * A stable machine code to switch on ({@code partly_cloudy}, {@code rain_snow_mix_likely}). Treat
+   * unknown codes as additive. {@code condition_text} is its display text, in English today; it is
+   * for showing, never for parsing or deriving the code (a {@code lang=} query parameter is
+   * reserved for localised text).
    *
    * @return the {@code condition} value ({@link HourlyCondition#UNKNOWN} for a value this SDK
    *     version does not know)
@@ -148,24 +149,14 @@ public final class TimeSeriesPoint extends Model {
   }
 
   /**
-   * Icon hint (prefixed with night_ for nighttime). Sky-only hints name the five sky classes.
-   * Precipitating hints carry the SIDE of the sky: {@code sun_*} ({@code night_moon_*}) when the
-   * sky leans clear ({@code P(< 40%) > P(>= 80%)}) — a sun or moon beside the rain cloud — and
-   * plain otherwise. Additive: {@code sun_chance_showers}, {@code sun_showers_likely}, {@code
-   * night_moon_chance_showers}, {@code night_moon_showers_likely}, {@code mostly_sunny}, {@code
-   * mostly_cloudy}, {@code night_mostly_clear}, {@code night_mostly_cloudy}, {@code
-   * showers_likely}, {@code night_showers_likely}. Retired: {@code sun_rain}, {@code
-   * scattered_showers}, {@code night_scattered_showers}, {@code rain_likely}, {@code
-   * night_rain_likely} (the hourly never says "likely rain"; an hour below the definite tier is
-   * showers). Snow, mix and freezing-rain conditions take their phase's icon at every tier ({@code
-   * snow}, {@code rain_snow_mix}, {@code freezing_rain}, and the {@code night_} forms). Additive:
-   * {@code freezing_rain}, {@code night_freezing_rain}.
+   * Machine-readable icon hint for frontends: one of {@link ConditionIcon} (the {@code night_*}
+   * forms are hourly only). Treat unknown values as additive.
    *
-   * @return the {@code condition_icon} value ({@link HourlyIcon#UNKNOWN} for a value this SDK
+   * @return the {@code condition_icon} value ({@link ConditionIcon#UNKNOWN} for a value this SDK
    *     version does not know)
    */
-  public HourlyIcon conditionIcon() {
-    return HourlyIcon.fromWireValue(conditionIcon);
+  public ConditionIcon conditionIcon() {
+    return ConditionIcon.fromWireValue(conditionIcon);
   }
 
   /**
@@ -191,10 +182,10 @@ public final class TimeSeriesPoint extends Model {
   /**
    * Present only when precipitation &gt; 0.
    *
-   * @return the {@code precip_type} value, or empty when the response omits it
+   * @return the {@code precipitation_type} value, or empty when the response omits it
    */
-  public Optional<PrecipType> precipType() {
-    return Optional.ofNullable(precipType);
+  public Optional<PrecipType> precipitationType() {
+    return Optional.ofNullable(precipitationType);
   }
 
   /**
@@ -303,7 +294,7 @@ public final class TimeSeriesPoint extends Model {
       conditionText,
       conditionIcon,
       gustNotable,
-      precipType,
+      precipitationType,
       inversion,
       freezingLevel,
       ensemble,
@@ -329,7 +320,7 @@ public final class TimeSeriesPoint extends Model {
     "conditionText",
     "conditionIcon",
     "gustNotable",
-    "precipType",
+    "precipitationType",
     "inversion",
     "freezingLevel",
     "ensemble",
@@ -350,7 +341,7 @@ public final class TimeSeriesPoint extends Model {
     private @Nullable String conditionText;
     private @Nullable String conditionIcon;
     private @Nullable Boolean gustNotable;
-    private @Nullable PrecipType precipType;
+    private @Nullable PrecipType precipitationType;
     private @Nullable InversionInfo inversion;
     private @Nullable FreezingLevel freezingLevel;
     private @Nullable EnsembleStats ensemble;
@@ -436,7 +427,7 @@ public final class TimeSeriesPoint extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder conditionIcon(HourlyIcon value) {
+    public Builder conditionIcon(ConditionIcon value) {
       this.conditionIcon = wire(value.wireValue());
       return this;
     }
@@ -465,13 +456,13 @@ public final class TimeSeriesPoint extends Model {
     }
 
     /**
-     * Sets {@link TimeSeriesPoint#precipType()}.
+     * Sets {@link TimeSeriesPoint#precipitationType()}.
      *
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder precipType(@Nullable PrecipType value) {
-      this.precipType = value;
+    public Builder precipitationType(@Nullable PrecipType value) {
+      this.precipitationType = value;
       return this;
     }
 

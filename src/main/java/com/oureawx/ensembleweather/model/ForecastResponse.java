@@ -145,10 +145,10 @@ public final class ForecastResponse extends Model {
   }
 
   /**
-   * The unit system every value in this body is in -- the request's {@code units=} (or its alias
-   * {@code unit_system=}), {@code metric} when neither is given. Always present, so a cached or
-   * shared body says whether {@code 32.0} is °F or °C. The Cap'n Proto body carries the same as
-   * {@code ForecastResponse.units} (set when {@code hasUnits}).
+   * The unit system every value in this body is in -- the request's {@code units=}, {@code metric}
+   * when it is not given. Always present, so a cached or shared body says whether {@code 32.0} is
+   * °F or °C. The Cap'n Proto body carries the same as {@code ForecastResponse.units} (set when
+   * {@code hasUnits}).
    *
    * @return the {@code units} value ({@link UnitSystem#UNKNOWN} for a value this SDK version does
    *     not know)

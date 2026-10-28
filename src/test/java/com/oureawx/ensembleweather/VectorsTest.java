@@ -232,7 +232,7 @@ class VectorsTest {
           LocationId where =
               opt(args, "location").isPresent()
                   ? LocationId.parse(str(args, "location"))
-                  : LocationId.of(str(args, "state"), str(args, "name"));
+                  : LocationId.of(str(args, "state"), str(args, "slug"));
           return client.getForecast(where, forecastOptions(args));
         }
       case "getPointForecast":
@@ -271,7 +271,7 @@ class VectorsTest {
       JsonValue v = e.getValue();
       switch (e.getKey()) {
         case "state":
-        case "name":
+        case "slug":
         case "location":
         case "lat":
         case "lon":

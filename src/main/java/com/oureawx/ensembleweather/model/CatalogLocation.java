@@ -8,10 +8,9 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A catalog location's PUBLIC projection -- the one {@code LocationRef} plus the catalog's public
- * content, by an allowlist. The CMS internals the public catalog used to serve (row ids, {@code
- * created_by}, {@code updated_by}, {@code created_at}, {@code updated_at} -- which moved on every
- * pageview -- {@code deleted_at}, {@code is_published}, {@code enrichment_tier}, {@code
- * view_count_*}, {@code template_variant}) are not served.
+ * content, by an allowlist: the CMS internals (row ids, {@code created_by}, {@code updated_by},
+ * {@code created_at}, {@code updated_at}, {@code deleted_at}, {@code is_published}, {@code
+ * enrichment_tier}, {@code view_count_*}, {@code template_variant}) are not served.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code PublicCatalogLocation}.
@@ -159,7 +158,7 @@ public final class CatalogLocation extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
    * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
    *     not know)

@@ -121,7 +121,8 @@ public final class MemberForecast extends Model {
   }
 
   /**
-   * {@code null} when this member published nothing at this hour.
+   * {@code null} when this member published nothing at this hour. Absent in the plume view ({@code
+   * members_view: plume}): the tier withholds it.
    *
    * @return the {@code wind_speed} value, or empty when the response omits it
    */
@@ -130,7 +131,7 @@ public final class MemberForecast extends Model {
   }
 
   /**
-   * The {@code wind_direction} value.
+   * As {@code wind_speed}, absent in the plume view.
    *
    * @return the {@code wind_direction} value, or empty when the response omits it
    */

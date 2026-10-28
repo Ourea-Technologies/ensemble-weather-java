@@ -5,8 +5,7 @@ import java.time.ZoneId;
 import org.jspecify.annotations.Nullable;
 
 /**
- * One location search result: the {@code LocationRef} fields , the county and {@code key}. {@code
- * Types[]} is gone ({@code type} is the primary type).
+ * One location search result: the {@code LocationRef} fields, the county and {@code key}.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
  * responses into it. Wire schema: {@code SearchHit}.
@@ -66,8 +65,9 @@ public final class SearchHit extends Model {
   }
 
   /**
-   * State-qualified identity {@code "<state>-<slug>"} (lowercase state). Bare slugs are only unique
-   * per state.
+   * The hit's opaque identity, {@code "<state>-<slug>"} (lowercase state): use it to de-duplicate
+   * or key hits, never parse it. Slugs are globally unique; build the forecast URL from {@code
+   * state} and {@code slug}.
    *
    * @return the {@code key} value
    */
@@ -76,7 +76,7 @@ public final class SearchHit extends Model {
   }
 
   /**
-   * The location's key: its catalog slug. With {@code state}, the URL {@code
+   * The location's catalog slug. With {@code state}, the URL {@code
    * /api/v1/locations/(state)/(slug)}; what a favorite stores.
    *
    * @return the {@code slug} value
@@ -131,7 +131,7 @@ public final class SearchHit extends Model {
   }
 
   /**
-   * The primary location type, snake_case .
+   * The primary location type, snake_case.
    *
    * @return the {@code type} value ({@link LocationType#UNKNOWN} for a value this SDK version does
    *     not know)

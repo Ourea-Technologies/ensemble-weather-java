@@ -31,7 +31,29 @@ public final class RateLimitException extends EnsembleWeatherException {
       @Nullable String code,
       @Nullable String requestId,
       @Nullable Duration retryAfter) {
-    super(ErrorCategory.RATE_LIMITED, message, status, code, requestId, null);
+    this(message, status, code, requestId, null, null, retryAfter);
+  }
+
+  /**
+   * Creates the exception with the error body's documentation link and parameter.
+   *
+   * @param message the human-readable detail
+   * @param status the HTTP status
+   * @param code the API's error code, or null
+   * @param requestId the request id, or null
+   * @param docUrl the body's {@code doc_url}, or null
+   * @param param the body's {@code param}, or null
+   * @param retryAfter the server's {@code Retry-After}, or null
+   */
+  public RateLimitException(
+      String message,
+      int status,
+      @Nullable String code,
+      @Nullable String requestId,
+      @Nullable String docUrl,
+      @Nullable String param,
+      @Nullable Duration retryAfter) {
+    super(ErrorCategory.RATE_LIMITED, message, status, code, requestId, docUrl, param, null);
     this.retryAfter = retryAfter;
   }
 

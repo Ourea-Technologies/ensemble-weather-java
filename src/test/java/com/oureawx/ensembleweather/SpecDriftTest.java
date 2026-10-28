@@ -108,8 +108,8 @@ class SpecDriftTest {
             .nowcast(false)
             .probability(ProbabilityTerm.atLeast(Variable.SNOWFALL, Threshold.of(1)))
             .total(TotalTerm.of(Variable.SNOWFALL))
-            .diagnostics(Diagnostic.PTYPE, Diagnostic.PROVENANCE)
-            .feelsLike(FeelsLikeIndex.UTCI)
+            .diagnostics(Diagnostic.PROVENANCE)
+            .include(ForecastInclude.SKIN_TEMPERATURE, ForecastInclude.MSLP)
             .build();
     ForecastOptions withElevations = ForecastOptions.builder().allElevations().build();
     CurrentOptions current =
@@ -130,7 +130,7 @@ class SpecDriftTest {
             .build();
     CatalogDetailOptions detail =
         CatalogDetailOptions.builder()
-            .include(CatalogInclude.CONTENT, CatalogInclude.ADS)
+            .include(CatalogInclude.CONTENT, CatalogInclude.TEMPLATE)
             .locale("es")
             .build();
     LocationId x = LocationId.of("or", "x");
@@ -168,8 +168,8 @@ class SpecDriftTest {
                 CatalogLocationQuery.builder()
                     .admin1("US-OR")
                     .country("US")
-                    .type("SkiArea")
-                    .template("Mountain")
+                    .type("ski_area")
+                    .template("mountain")
                     .limit(5)
                     .cursor("c")
                     .build()));
@@ -181,16 +181,14 @@ class SpecDriftTest {
                 CatalogStationQuery.builder()
                     .admin1("US-OR")
                     .country("US")
-                    .networks("Snotel", "Raws")
+                    .networks("snotel", "raws")
                     .capabilities("swe", "air_temp")
-                    .status("Active")
+                    .status("active")
                     .limit(5)
                     .cursor("c")
                     .build()));
     CALLS.put("getCatalogStation", c -> c.getCatalogStation("x", detail));
-    CALLS.put("getAvailableRuns", c -> c.getRuns(5));
-    CALLS.put("getStormReports", c -> c.getStormReports(5));
-    CALLS.put("getStormReport", c -> c.getStormReport(7));
+    CALLS.put("getAvailableRuns", c -> c.getRuns(5, "c"));
     CALLS.put("getAttribution", EnsembleWeatherClient::getAttribution);
   }
 
@@ -253,17 +251,14 @@ class SpecDriftTest {
 
   private static final Map<String, String> INLINE =
       Map.of(
-          "ForecastResponse.gap_flow", "GapFlow",
           "LocationSummary.elevations", "LocationElevation",
-          "ElevationForecast.timeseries", "ElevationTimeSeriesPoint",
           "CurrentConditions.station", "CurrentStation",
           "TimeSeriesPoint.members", "ModelMembers",
           "RunsResponse.served", "ServedRun",
-          "RunsResponse.runs", "RunInfo",
-          "DailyForecast.wind", "DailyWind");
+          "RunsResponse.runs", "RunInfo");
 
   private static final Set<String> NOT_MODELS =
-      Set.of("ErrorResponse", "UnitSystem", "FreezingLevel", "ModelMeans");
+      Set.of("ErrorResponse", "UnitSystem", "FreezingLevel", "ModelMeans", "NextCursor");
 
   private static String className(String schema) {
     if (schema.startsWith("FreezingLevel")) {
@@ -387,8 +382,6 @@ class SpecDriftTest {
     DECODERS.put("listCatalogStations", Decoders::catalogStationPage);
     DECODERS.put("getCatalogStation", Decoders::catalogStationDetail);
     DECODERS.put("getAvailableRuns", Decoders::runsResponse);
-    DECODERS.put("getStormReports", Decoders::stormReportsResponse);
-    DECODERS.put("getStormReport", Decoders::stormReportCard);
     DECODERS.put("getAttribution", Decoders::attributionRegistry);
   }
 
@@ -397,11 +390,7 @@ class SpecDriftTest {
    * is a finding against ensemble-weather-spec; the test fails when one starts to decode (so the
    * entry can go) or fails for another reason.
    */
-  private static final Map<String, String> STALE_EXAMPLES =
-      Map.of(
-          "getLocationForecast 200 dailyOnly", "$.location.slug is required but missing",
-          "getLocationForecast 200 plumes", "$.location.slug is required but missing",
-          "getPointForecast 200 point", "$.location.slug is required but missing");
+  private static final Map<String, String> STALE_EXAMPLES = Map.of();
 
   @SuppressWarnings("unchecked")
   static JsonValue toJson(Object yaml) {

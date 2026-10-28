@@ -161,8 +161,8 @@ public final class CurrentResponse extends Model {
 
   /**
    * The obs-blended forecast hours with valid times in [as_of − 1 h, as_of + 10 h], shaped like the
-   * forecast's {@code timeseries} points; null when no cycle is servable. Present only with {@code
-   * ?include=nowcast_hours}; {@code current} is the flat "right now".
+   * forecast's {@code timeseries} points. Present only with {@code ?include=nowcast_hours}, and
+   * then null when no cycle is servable; absent otherwise. {@code current} is the flat "right now".
    *
    * @return the {@code nowcast_hours} values; empty when the response has none
    */

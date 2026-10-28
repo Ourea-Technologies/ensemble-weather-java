@@ -31,8 +31,6 @@ import com.oureawx.ensembleweather.model.RateLimit;
 import com.oureawx.ensembleweather.model.ResponseMetadata;
 import com.oureawx.ensembleweather.model.RunsResponse;
 import com.oureawx.ensembleweather.model.SearchLocationsResponse;
-import com.oureawx.ensembleweather.model.StormReportCard;
-import com.oureawx.ensembleweather.model.StormReportsResponse;
 import com.oureawx.ensembleweather.model.UnitSystem;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -306,7 +304,7 @@ public final class EnsembleWeatherClient {
           ForecastResponse.Builder b = r.toBuilder();
           // An answer list the server omitted stays empty; a present one must answer every term.
           if (!prob.isEmpty() && body.get("probabilities").filter(v -> !v.isNull()).isPresent()) {
-            b.probabilities(Terms.mapProbabilities(prob, r.probabilities(), r.units()));
+            b.probabilities(Terms.mapProbabilities(prob, r.probabilities()));
           }
           if (!totals.isEmpty() && body.get("window_totals").filter(v -> !v.isNull()).isPresent()) {
             b.windowTotals(Terms.mapTotals(totals, r.windowTotals()));
@@ -1065,17 +1063,28 @@ public final class EnsembleWeatherClient {
     return getCatalogStationAsync(slug, CatalogDetailOptions.defaults());
   }
 
-  // ---------------------------------------------------------------- runs, reports, attribution
+  // ---------------------------------------------------------------- runs, attribution
 
   /**
    * The model runs a {@code run} option can pin, and what a forecast serves now ({@code
    * getAvailableRuns}).
    *
    * @param limit the number of runs (default 10, at most 100)
-   * @return the runs, newest first
+   * @return the runs, newest first; {@code nextCursor()} leads to older ones
    */
   public RunsResponse getRuns(int limit) {
-    return join(getRunsAsync(limit));
+    return join(getRunsAsync(limit, null));
+  }
+
+  /**
+   * A page of model runs after a cursor ({@code getAvailableRuns}).
+   *
+   * @param limit the number of runs (default 10, at most 100)
+   * @param cursor a previous page's {@code nextCursor()}, or null for the newest runs
+   * @return the runs, newest first
+   */
+  public RunsResponse getRuns(int limit, @Nullable String cursor) {
+    return join(getRunsAsync(limit, cursor));
   }
 
   /**
@@ -1088,21 +1097,32 @@ public final class EnsembleWeatherClient {
   }
 
   /**
+   * Asynchronously, {@link #getRuns(int, String)}.
+   *
+   * @param limit the number of runs
+   * @param cursor a previous page's {@code nextCursor()}, or null
+   * @return the runs, eventually
+   */
+  public CompletableFuture<RunsResponse> getRunsAsync(int limit, @Nullable String cursor) {
+    return guard(
+        () ->
+            call(
+                "getAvailableRuns",
+                "/api/v1/runs",
+                new Query().integer("limit", (long) limit, 10L).string("cursor", cursor),
+                false,
+                Decoders::runsResponse,
+                (r, m) -> r.toBuilder().metadata(m).build()));
+  }
+
+  /**
    * Asynchronously, {@link #getRuns(int)}.
    *
    * @param limit the number of runs
    * @return the runs, eventually
    */
   public CompletableFuture<RunsResponse> getRunsAsync(int limit) {
-    return guard(
-        () ->
-            call(
-                "getAvailableRuns",
-                "/api/v1/runs",
-                new Query().integer("limit", (long) limit, 10L),
-                false,
-                Decoders::runsResponse,
-                (r, m) -> r.toBuilder().metadata(m).build()));
+    return getRunsAsync(limit, null);
   }
 
   /**
@@ -1112,80 +1132,6 @@ public final class EnsembleWeatherClient {
    */
   public CompletableFuture<RunsResponse> getRunsAsync() {
     return getRunsAsync(10);
-  }
-
-  /**
-   * Published storm report cards, most recent first ({@code getStormReports}).
-   *
-   * @param limit the number of reports (default 20, at most 100)
-   * @return the reports
-   */
-  public StormReportsResponse getStormReports(int limit) {
-    return join(getStormReportsAsync(limit));
-  }
-
-  /**
-   * The 20 most recent storm report cards.
-   *
-   * @return the reports
-   */
-  public StormReportsResponse getStormReports() {
-    return getStormReports(20);
-  }
-
-  /**
-   * Asynchronously, {@link #getStormReports(int)}.
-   *
-   * @param limit the number of reports
-   * @return the reports, eventually
-   */
-  public CompletableFuture<StormReportsResponse> getStormReportsAsync(int limit) {
-    return guard(
-        () ->
-            call(
-                "getStormReports",
-                "/api/v1/storm-reports",
-                new Query().integer("limit", (long) limit, 20L),
-                false,
-                Decoders::stormReportsResponse,
-                (r, m) -> r.toBuilder().metadata(m).build()));
-  }
-
-  /**
-   * Asynchronously, {@link #getStormReports()}.
-   *
-   * @return the reports, eventually
-   */
-  public CompletableFuture<StormReportsResponse> getStormReportsAsync() {
-    return getStormReportsAsync(20);
-  }
-
-  /**
-   * One storm report card ({@code getStormReport}).
-   *
-   * @param id the report's id
-   * @return the report
-   */
-  public StormReportCard getStormReport(long id) {
-    return join(getStormReportAsync(id));
-  }
-
-  /**
-   * Asynchronously, {@link #getStormReport(long)}.
-   *
-   * @param id the report's id
-   * @return the report, eventually
-   */
-  public CompletableFuture<StormReportCard> getStormReportAsync(long id) {
-    return guard(
-        () ->
-            call(
-                "getStormReport",
-                "/api/v1/storm-reports/" + id,
-                new Query(),
-                false,
-                Decoders::stormReportCard,
-                (r, m) -> r.toBuilder().metadata(m).build()));
   }
 
   /**

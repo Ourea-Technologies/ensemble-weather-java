@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * The wire form of {@code prob=} and {@code totals=} (BEHAVIOR.md sections 4 and 5): threshold
@@ -27,10 +26,9 @@ import java.util.Objects;
 public final class Terms {
   private Terms() {}
 
-  /** One term in wire form, with the key its answer is matched by. */
+  /** One term in wire form; its text is the {@code term} its answer echoes. */
   public static final class WireTerm {
     final String text;
-    final String key;
     final Variable variable;
     final String op;
     final Window window;
@@ -39,14 +37,12 @@ public final class Terms {
 
     WireTerm(
         String text,
-        String key,
         Variable variable,
         String op,
         Window window,
         int aggregationRank,
         double threshold) {
       this.text = text;
-      this.key = key;
       this.variable = variable;
       this.op = op;
       this.window = window;
@@ -191,11 +187,6 @@ public final class Terms {
     }
   }
 
-  private static String key(
-      String variable, String op, String threshold, int start, int end, String aggregation) {
-    return variable + ":" + op + ":" + threshold + ":" + start + "-" + end + ":" + aggregation;
-  }
-
   /**
    * One probability term in wire form.
    *
@@ -222,13 +213,7 @@ public final class Terms {
             + term.window()
             + (isDefault ? "" : ":" + aggWire);
     return new WireTerm(
-        text,
-        key(variable, op, threshold, term.window().startHours(), term.window().endHours(), aggWire),
-        term.variable(),
-        op,
-        term.window(),
-        rank(agg),
-        Double.parseDouble(threshold));
+        text, term.variable(), op, term.window(), rank(agg), Double.parseDouble(threshold));
   }
 
   /**
@@ -239,14 +224,7 @@ public final class Terms {
    */
   public static WireTerm total(TotalTerm term) {
     String variable = wire(term.variable());
-    return new WireTerm(
-        variable + ":" + term.window(),
-        variable + ":" + term.window().startHours() + "-" + term.window().endHours(),
-        term.variable(),
-        "",
-        term.window(),
-        0,
-        0);
+    return new WireTerm(variable + ":" + term.window(), term.variable(), "", term.window(), 0, 0);
   }
 
   /**
@@ -270,36 +248,23 @@ public final class Terms {
   }
 
   /**
-   * Maps the server's probability answers back to the caller's terms, in the caller's order
-   * (duplicates share one answer).
+   * Maps the server's probability answers back to the caller's terms by the term string each answer
+   * echoes, in the caller's order (duplicates share one answer).
    *
    * @param terms the wire terms, in the caller's order
-   * @param results the server's answers, in canonical order
-   * @param units the request's units
+   * @param results the server's answers
    * @return the answers, one per caller term
    * @throws MalformedResponseException if a term has no answer
    */
   public static List<ProbabilityResult> mapProbabilities(
-      List<WireTerm> terms, List<ProbabilityResult> results, UnitSystem units) {
-    Map<String, ProbabilityResult> byKey = new HashMap<>();
+      List<WireTerm> terms, List<ProbabilityResult> results) {
+    Map<String, ProbabilityResult> byTerm = new HashMap<>();
     for (ProbabilityResult r : results) {
-      Variable v = r.variable();
-      if (v == Variable.UNKNOWN) {
-        continue;
-      }
-      byKey.put(
-          key(
-              r.variableAsString(),
-              r.opAsString(),
-              round(r.threshold(), decimals(v, units)),
-              r.windowStartHours(),
-              r.windowEndHours(),
-              r.aggregationAsString()),
-          r);
+      byTerm.put(r.term(), r);
     }
     List<ProbabilityResult> out = new ArrayList<>();
     for (WireTerm t : terms) {
-      ProbabilityResult r = byKey.get(t.key);
+      ProbabilityResult r = byTerm.get(t.text);
       if (r == null) {
         throw new MalformedResponseException(
             "the response's probabilities have no answer for prob term " + t.text);
@@ -310,7 +275,8 @@ public final class Terms {
   }
 
   /**
-   * Maps the server's window totals back to the caller's terms, in the caller's order.
+   * Maps the server's window totals back to the caller's terms by the term string each answer
+   * echoes, in the caller's order.
    *
    * @param terms the wire terms, in the caller's order
    * @param results the server's answers
@@ -318,18 +284,18 @@ public final class Terms {
    * @throws MalformedResponseException if a term has no answer
    */
   public static List<WindowTotal> mapTotals(List<WireTerm> terms, List<WindowTotal> results) {
-    Map<String, WindowTotal> byKey = new HashMap<>();
+    Map<String, WindowTotal> byTerm = new HashMap<>();
     for (WindowTotal r : results) {
-      byKey.put(r.variableAsString() + ":" + r.windowStartHours() + "-" + r.windowEndHours(), r);
+      byTerm.put(r.term(), r);
     }
     List<WindowTotal> out = new ArrayList<>();
     for (WireTerm t : terms) {
-      WindowTotal r = byKey.get(t.key);
+      WindowTotal r = byTerm.get(t.text);
       if (r == null) {
         throw new MalformedResponseException(
             "the response's window_totals have no answer for totals term " + t.text);
       }
-      out.add(Objects.requireNonNull(r));
+      out.add(r);
     }
     return out;
   }

@@ -7,13 +7,13 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * A distribution: the one shape of every ensemble statistic the API serves (each hour's {@code
- * ensemble.*}, the daily highs, lows and totals, window totals, snow-outlook windows), in the
- * request's units. Percentiles are over the ensemble members.
+ * ensemble.*} but {@code wind_direction}, the daily highs, lows and totals, window totals,
+ * snow-outlook windows), in the request's units. Percentiles are over the ensemble members.
  *
- * <p>Every field is optional, and a missing one is absent, never 0. {@link #range(Percentile,
- * Percentile)} offers the served pairs (p10 to p90, p25 to p75) and {@link #median()} is p50; the
- * SDK never interpolates or sums quantiles. {@code wind_direction} quantiles are circular: {@code
- * max} may be numerically less than {@code min}, and that is not "fixed".
+ * <p>The API sends every field but {@code probability}; the SDK still treats each as optional, and
+ * a missing one is absent, never 0. {@link #range(Percentile, Percentile)} offers the served pairs
+ * (p10 to p90, p25 to p75) and {@link #median()} is p50; the SDK never interpolates or sums
+ * quantiles. Wind direction is circular and is a {@link CircularStats}, not a {@code Quantiles}.
  *
  * <p>Immutable. Build one with {@link #builder()} (for tests and mocks). Wire schema: {@code
  * Quantiles}.
@@ -128,9 +128,7 @@ public final class Quantiles extends Model {
   }
 
   /**
-   * P0 (ensemble minimum -- absolute extreme, often an outlier). For the CIRCULAR variable {@code
-   * wind_direction} this is the anticlockwise END of an arc and may be numerically greater than
-   * {@code max} (read {@code wind_direction_circular}).
+   * P0 (ensemble minimum -- absolute extreme, often an outlier).
    *
    * @return the {@code min} value, or empty when the response omits it
    */
@@ -139,8 +137,7 @@ public final class Quantiles extends Model {
   }
 
   /**
-   * P100 (ensemble maximum -- absolute extreme, often an outlier). For {@code wind_direction} this
-   * is the clockwise END of an arc and may be numerically less than {@code min}.
+   * P100 (ensemble maximum -- absolute extreme, often an outlier).
    *
    * @return the {@code max} value, or empty when the response omits it
    */
@@ -150,8 +147,9 @@ public final class Quantiles extends Model {
 
   /**
    * Only on the hourly {@code precipitation} and {@code snowfall}: the probability of occurrence,
-   * P(amount &gt;= 0.1 mm trace), with the rain-icon false-alarm gate applied so it agrees with the
-   * hour's {@code condition}/icon. Omitted everywhere else.
+   * P(amount &gt;= 0.254 mm) -- the NWS measurable event, 0.01 in ({@code thresholds} names it) --
+   * with the rain-icon false-alarm gate applied so it agrees with the hour's {@code
+   * condition}/icon. Omitted everywhere else.
    *
    * @return the {@code probability} value, or empty when the response omits it
    */

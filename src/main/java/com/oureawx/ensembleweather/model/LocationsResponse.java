@@ -79,8 +79,7 @@ public final class LocationsResponse extends Model {
   }
 
   /**
-   * Present only on a paged response ({@code limit} given) that has more rows after it. Pass it
-   * back as {@code cursor}.
+   * The {@code next_cursor} value.
    *
    * @return the {@code next_cursor} value, or empty when the response omits it
    */

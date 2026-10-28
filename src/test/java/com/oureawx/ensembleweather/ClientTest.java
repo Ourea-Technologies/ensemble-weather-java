@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -130,7 +131,7 @@ class ClientTest {
     EnsembleWeatherClient c = t.builder().build();
     CompletableFuture<ForecastResponse> ok =
         c.getForecastAsync(LocationId.parse("or/mt-hood-meadows"));
-    assertEquals("mt-hood-meadows", ok.get().location().slug());
+    assertEquals(Optional.of("mt-hood-meadows"), ok.get().location().slug());
     ExecutionException e =
         assertThrows(
             ExecutionException.class, () -> c.getAlertsAsync(LocationId.of("or", "x")).get());
@@ -176,6 +177,60 @@ class ClientTest {
         .json(200, FORECAST);
     t.builder().build().getForecast("or/mt-hood-meadows");
     assertEquals(List.of(7.0), t.delays);
+  }
+
+  @Test
+  void retryAfterOnA504IsHonoured() {
+    TestClients t = new TestClients();
+    t.transport.respond(504, Map.of("Retry-After", "3"), "").json(200, FORECAST);
+    t.builder().build().getForecast("or/mt-hood-meadows");
+    assertEquals(List.of(3.0), t.delays);
+  }
+
+  @Test
+  void theErrorBodyCarriesItsRequestIdDocUrlAndParam() {
+    TestClients t = new TestClients();
+    t.transport.respond(
+        400,
+        Map.of("Content-Type", "application/json", "X-Request-Id", "from-header"),
+        "{\"error\":\"BAD_REQUEST\",\"message\":\"max_hours must be 1-240\","
+            + "\"request_id\":\"from-body\",\"param\":\"max_hours\","
+            + "\"doc_url\":\"https://docs.oureawx.com/features/errors/#bad_request\"}");
+    InvalidRequestException e =
+        assertThrows(InvalidRequestException.class, () -> t.builder().build().getForecast("or/x"));
+    assertEquals(Optional.of("from-body"), e.requestId());
+    assertEquals(Optional.of("max_hours"), e.param());
+    assertEquals(Optional.of("https://docs.oureawx.com/features/errors/#bad_request"), e.docUrl());
+  }
+
+  @Test
+  void proRequiredNamesTheNearestFreeLocation() {
+    TestClients t = new TestClients();
+    t.transport.json(
+        403,
+        "{\"error\":\"PRO_REQUIRED\",\"message\":\"Pro\",\"nearest_location\":"
+            + "{\"slug\":\"mt-hood-meadows\",\"url\":\"/api/v1/locations/or/mt-hood-meadows\","
+            + "\"distance_km\":2.5,\"elevation_m\":1600}}");
+    PermissionException e =
+        assertThrows(
+            PermissionException.class,
+            () -> t.builder().build().getPointForecast(Coordinates.of(45.33, -121.67)));
+    assertEquals("mt-hood-meadows", e.nearestLocation().orElseThrow().slug());
+    assertEquals(Optional.empty(), e.param());
+  }
+
+  @Test
+  void retiredCodesMapByStatus() {
+    TestClients t = new TestClients();
+    t.transport
+        .json(403, "{\"error\":\"FORBIDDEN\",\"message\":\"x\"}")
+        .json(400, "{\"error\":\"FEELS_LIKE_UNAVAILABLE\",\"message\":\"x\"}")
+        .json(503, "{\"error\":\"AUTH_UNAVAILABLE\",\"message\":\"x\"}");
+    EnsembleWeatherClient c = t.builder().maxRetries(0).build();
+    PermissionException p = assertThrows(PermissionException.class, () -> c.getForecast("or/x"));
+    assertEquals(Optional.of("FORBIDDEN"), p.code());
+    assertThrows(InvalidRequestException.class, () -> c.getForecast("or/x"));
+    assertThrows(UnavailableException.class, () -> c.getForecast("or/x"));
   }
 
   @Test

@@ -75,20 +75,42 @@ public final class CatalogNearbyStation extends Model {
   }
 
   /**
-   * The {@code network} value.
+   * Observation network, snake_case (was the CMS enum's {@code Snotel}).
    *
-   * @return the {@code network} value
+   * @return the {@code network} value ({@link StationNetwork#UNKNOWN} for a value this SDK version
+   *     does not know)
    */
-  public String network() {
+  public StationNetwork network() {
+    return StationNetwork.fromWireValue(network);
+  }
+
+  /**
+   * The {@code network} value exactly as the API sent it, even when this SDK version does not know
+   * it.
+   *
+   * @return the raw {@code network} string
+   */
+  public String networkAsString() {
     return network;
   }
 
   /**
-   * The {@code station_status} value.
+   * Live-feed status, snake_case (was {@code Active}).
    *
-   * @return the {@code station_status} value
+   * @return the {@code station_status} value ({@link StationStatus#UNKNOWN} for a value this SDK
+   *     version does not know)
    */
-  public String stationStatus() {
+  public StationStatus stationStatus() {
+    return StationStatus.fromWireValue(stationStatus);
+  }
+
+  /**
+   * The {@code station_status} value exactly as the API sent it, even when this SDK version does
+   * not know it.
+   *
+   * @return the raw {@code station_status} string
+   */
+  public String stationStatusAsString() {
     return stationStatus;
   }
 
@@ -173,7 +195,19 @@ public final class CatalogNearbyStation extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder network(String value) {
+    public Builder network(StationNetwork value) {
+      this.network = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogNearbyStation#networkAsString()}, the raw wire value, kept verbatim even
+     * when this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder networkAsString(String value) {
       this.network = value;
       return this;
     }
@@ -184,7 +218,19 @@ public final class CatalogNearbyStation extends Model {
      * @param value the value
      * @return this builder
      */
-    public Builder stationStatus(String value) {
+    public Builder stationStatus(StationStatus value) {
+      this.stationStatus = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CatalogNearbyStation#stationStatusAsString()}, the raw wire value, kept verbatim
+     * even when this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder stationStatusAsString(String value) {
       this.stationStatus = value;
       return this;
     }

@@ -6,9 +6,7 @@ public enum CatalogInclude {
   /** Published content entries attached to the page, locale-resolved. */
   CONTENT("content"),
   /** The resolved page template. */
-  TEMPLATE("template"),
-  /** Resolved ad placements (only for tiers that show ads). */
-  ADS("ads");
+  TEMPLATE("template");
 
   private final String wire;
 

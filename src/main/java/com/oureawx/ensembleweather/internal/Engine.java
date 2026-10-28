@@ -5,6 +5,7 @@ import com.oureawx.ensembleweather.AuthenticationException;
 import com.oureawx.ensembleweather.CachedResponse;
 import com.oureawx.ensembleweather.ConnectionException;
 import com.oureawx.ensembleweather.EnsembleWeatherException;
+import com.oureawx.ensembleweather.ErrorCategory;
 import com.oureawx.ensembleweather.InvalidRequestException;
 import com.oureawx.ensembleweather.NotFoundException;
 import com.oureawx.ensembleweather.OutsideCoverageException;
@@ -13,6 +14,7 @@ import com.oureawx.ensembleweather.RateLimitException;
 import com.oureawx.ensembleweather.ResponseCache;
 import com.oureawx.ensembleweather.UnavailableException;
 import com.oureawx.ensembleweather.model.JsonValue;
+import com.oureawx.ensembleweather.model.NearestLocation;
 import com.oureawx.ensembleweather.model.RateLimit;
 import com.oureawx.ensembleweather.model.ResponseMetadata;
 import java.net.URI;
@@ -25,6 +27,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -216,7 +220,9 @@ public final class Engine {
                 error = errorFor(response);
                 if (RETRYABLE.contains(response.status())) {
                   Duration retryAfter =
-                      response.status() == 429 || response.status() == 503
+                      response.status() == 429
+                              || response.status() == 503
+                              || response.status() == 504
                           ? retryAfter(response)
                           : null;
                   if (retryAfter == null) {
@@ -522,14 +528,22 @@ public final class Engine {
     int status = response.status();
     String code = null;
     String message = null;
+    String bodyRequestId = null;
+    String docUrl = null;
+    String param = null;
+    NearestLocation nearest = null;
     try {
       JsonValue body = Json.parse(response.body());
       code = body.get("error").flatMap(JsonValue::asString).orElse(null);
       message = body.get("message").flatMap(JsonValue::asString).orElse(null);
+      bodyRequestId = body.get("request_id").flatMap(JsonValue::asString).orElse(null);
+      docUrl = body.get("doc_url").flatMap(JsonValue::asString).orElse(null);
+      param = body.get("param").flatMap(JsonValue::asString).orElse(null);
+      nearest = nearestLocation(body);
     } catch (MalformedResponseException e) {
       // Not JSON (a proxy's page, an empty body): classified by status alone.
     }
-    String requestId = response.header("X-Request-Id");
+    String requestId = bodyRequestId != null ? bodyRequestId : response.header("X-Request-Id");
     String text =
         redact(
             (message == null || message.isEmpty() ? "HTTP " + status : message)
@@ -538,55 +552,86 @@ public final class Engine {
                 + (code == null ? "" : ", " + code)
                 + (requestId == null ? "" : ", request " + requestId)
                 + ")");
-    if (code != null) {
-      switch (code) {
-        case "INVALID_API_KEY":
-        case "UNAUTHORIZED":
-          return new AuthenticationException(text, status, code, requestId);
-        case "PRO_REQUIRED":
-        case "FORBIDDEN":
-          return new PermissionException(text, status, code, requestId);
-        case "LOCATION_NOT_FOUND":
-        case "MODEL_RUN_NOT_FOUND":
-        case "NOT_FOUND":
-        case "GONE":
-          return new NotFoundException(text, status, code, requestId);
-        case "BAD_REQUEST":
-        case "INVALID_COORDINATES":
-        case "INVALID_ELEVATION":
-        case "INVALID_MAX_HOURS":
-        case "ELEVATION_REQUIRED":
-        case "AMBIGUOUS":
-        case "FEELS_LIKE_UNAVAILABLE":
-          return new InvalidRequestException(text, status, code, requestId);
-        case "OUTSIDE_COVERAGE":
-          return new OutsideCoverageException(text, status, code, requestId);
-        case "TOO_MANY_REQUESTS":
-          return new RateLimitException(text, status, code, requestId, retryAfter(response));
-        case "FORECAST_UNAVAILABLE":
-        case "TIMEOUT":
-        case "INTERNAL_ERROR":
-        case "DATABASE_ERROR":
-          return new UnavailableException(text, status, code, requestId);
-        default:
-          break;
-      }
+    ErrorCategory category = code == null ? null : CATEGORIES.get(code);
+    if (category == null) {
+      category = byStatus(status);
     }
+    switch (category) {
+      case AUTHENTICATION:
+        return new AuthenticationException(text, status, code, requestId, docUrl, param);
+      case PERMISSION:
+        return new PermissionException(text, status, code, requestId, docUrl, param, nearest);
+      case NOT_FOUND:
+        return new NotFoundException(text, status, code, requestId, docUrl, param);
+      case INVALID_REQUEST:
+        return new InvalidRequestException(text, status, code, requestId, docUrl, param);
+      case OUTSIDE_COVERAGE:
+        return new OutsideCoverageException(text, status, code, requestId, docUrl, param);
+      case RATE_LIMITED:
+        return new RateLimitException(
+            text, status, code, requestId, docUrl, param, retryAfter(response));
+      default:
+        return new UnavailableException(text, status, code, requestId, docUrl, param);
+    }
+  }
+
+  /** The public spec's {@code ErrorResponse.error} codes by category (BEHAVIOR.md section 8). */
+  private static final Map<String, ErrorCategory> CATEGORIES = categories();
+
+  private static Map<String, ErrorCategory> categories() {
+    Map<String, ErrorCategory> m = new HashMap<>();
+    for (String c : new String[] {"INVALID_API_KEY", "UNAUTHORIZED"}) {
+      m.put(c, ErrorCategory.AUTHENTICATION);
+    }
+    m.put("PRO_REQUIRED", ErrorCategory.PERMISSION);
+    for (String c : new String[] {"LOCATION_NOT_FOUND", "NOT_FOUND"}) {
+      m.put(c, ErrorCategory.NOT_FOUND);
+    }
+    for (String c :
+        new String[] {
+          "BAD_REQUEST", "INVALID_COORDINATES", "INVALID_ELEVATION", "ELEVATION_REQUIRED"
+        }) {
+      m.put(c, ErrorCategory.INVALID_REQUEST);
+    }
+    m.put("OUTSIDE_COVERAGE", ErrorCategory.OUTSIDE_COVERAGE);
+    m.put("TOO_MANY_REQUESTS", ErrorCategory.RATE_LIMITED);
+    for (String c :
+        new String[] {
+          "FORECAST_UNAVAILABLE", "TIMEOUT", "INTERNAL_ERROR", "DATABASE_ERROR", "AUTH_UNAVAILABLE"
+        }) {
+      m.put(c, ErrorCategory.UNAVAILABLE);
+    }
+    return Collections.unmodifiableMap(m);
+  }
+
+  private static ErrorCategory byStatus(int status) {
     if (status == 401) {
-      return new AuthenticationException(text, status, code, requestId);
+      return ErrorCategory.AUTHENTICATION;
     }
     if (status == 403) {
-      return new PermissionException(text, status, code, requestId);
+      return ErrorCategory.PERMISSION;
     }
     if (status == 404 || status == 410) {
-      return new NotFoundException(text, status, code, requestId);
+      return ErrorCategory.NOT_FOUND;
     }
     if (status == 429) {
-      return new RateLimitException(text, status, code, requestId, retryAfter(response));
+      return ErrorCategory.RATE_LIMITED;
     }
     if (status >= 400 && status < 500) {
-      return new InvalidRequestException(text, status, code, requestId);
+      return ErrorCategory.INVALID_REQUEST;
     }
-    return new UnavailableException(text, status, code, requestId);
+    return ErrorCategory.UNAVAILABLE;
+  }
+
+  private static @Nullable NearestLocation nearestLocation(JsonValue body) {
+    JsonValue v = body.get("nearest_location").orElse(null);
+    if (v == null || v.isNull()) {
+      return null;
+    }
+    try {
+      return Decoders.nearestLocation(JsonFields.root(v, null));
+    } catch (MalformedResponseException e) {
+      return null; // a malformed extra never hides the error itself
+    }
   }
 }

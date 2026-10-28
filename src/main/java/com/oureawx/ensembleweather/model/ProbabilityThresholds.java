@@ -13,16 +13,19 @@ import org.jspecify.annotations.Nullable;
 public final class ProbabilityThresholds extends Model {
   private final double hourlyPrecipitation;
   private final double hourlySnowfall;
-  private final double dailyPrecipProbability;
-  private final double dailyPrecipOccurrenceProbability;
+  private final double dailyPrecipitationProbability;
+  private final double dailyPrecipitationOccurrenceProbability;
   private final double dailySnowProbability;
 
   private ProbabilityThresholds(Builder b) {
     this.hourlyPrecipitation = require(b.hourlyPrecipitation, "hourly_precipitation");
     this.hourlySnowfall = require(b.hourlySnowfall, "hourly_snowfall");
-    this.dailyPrecipProbability = require(b.dailyPrecipProbability, "daily_precip_probability");
-    this.dailyPrecipOccurrenceProbability =
-        require(b.dailyPrecipOccurrenceProbability, "daily_precip_occurrence_probability");
+    this.dailyPrecipitationProbability =
+        require(b.dailyPrecipitationProbability, "daily_precipitation_probability");
+    this.dailyPrecipitationOccurrenceProbability =
+        require(
+            b.dailyPrecipitationOccurrenceProbability,
+            "daily_precipitation_occurrence_probability");
     this.dailySnowProbability = require(b.dailySnowProbability, "daily_snow_probability");
   }
 
@@ -44,8 +47,8 @@ public final class ProbabilityThresholds extends Model {
     Builder b = new Builder();
     b.hourlyPrecipitation = this.hourlyPrecipitation;
     b.hourlySnowfall = this.hourlySnowfall;
-    b.dailyPrecipProbability = this.dailyPrecipProbability;
-    b.dailyPrecipOccurrenceProbability = this.dailyPrecipOccurrenceProbability;
+    b.dailyPrecipitationProbability = this.dailyPrecipitationProbability;
+    b.dailyPrecipitationOccurrenceProbability = this.dailyPrecipitationOccurrenceProbability;
     b.dailySnowProbability = this.dailySnowProbability;
     return b;
   }
@@ -69,22 +72,22 @@ public final class ProbabilityThresholds extends Model {
   }
 
   /**
-   * {@code daily[].precip_probability}'s day-total threshold (2.5 mm).
+   * {@code daily[].precipitation_probability}'s day-total threshold (2.5 mm).
    *
-   * @return the {@code daily_precip_probability} value
+   * @return the {@code daily_precipitation_probability} value
    */
-  public double dailyPrecipProbability() {
-    return dailyPrecipProbability;
+  public double dailyPrecipitationProbability() {
+    return dailyPrecipitationProbability;
   }
 
   /**
-   * {@code daily[].precip_occurrence_probability}'s threshold (1.0 mm), also the "if wet"
+   * {@code daily[].precipitation_occurrence_probability}'s threshold (1.0 mm), also the "if wet"
    * condition.
    *
-   * @return the {@code daily_precip_occurrence_probability} value
+   * @return the {@code daily_precipitation_occurrence_probability} value
    */
-  public double dailyPrecipOccurrenceProbability() {
-    return dailyPrecipOccurrenceProbability;
+  public double dailyPrecipitationOccurrenceProbability() {
+    return dailyPrecipitationOccurrenceProbability;
   }
 
   /**
@@ -101,8 +104,8 @@ public final class ProbabilityThresholds extends Model {
     return new Object[] {
       hourlyPrecipitation,
       hourlySnowfall,
-      dailyPrecipProbability,
-      dailyPrecipOccurrenceProbability,
+      dailyPrecipitationProbability,
+      dailyPrecipitationOccurrenceProbability,
       dailySnowProbability
     };
   }
@@ -115,8 +118,8 @@ public final class ProbabilityThresholds extends Model {
   private static final String[] NAMES = {
     "hourlyPrecipitation",
     "hourlySnowfall",
-    "dailyPrecipProbability",
-    "dailyPrecipOccurrenceProbability",
+    "dailyPrecipitationProbability",
+    "dailyPrecipitationOccurrenceProbability",
     "dailySnowProbability"
   };
 
@@ -124,8 +127,8 @@ public final class ProbabilityThresholds extends Model {
   public static final class Builder {
     private @Nullable Double hourlyPrecipitation;
     private @Nullable Double hourlySnowfall;
-    private @Nullable Double dailyPrecipProbability;
-    private @Nullable Double dailyPrecipOccurrenceProbability;
+    private @Nullable Double dailyPrecipitationProbability;
+    private @Nullable Double dailyPrecipitationOccurrenceProbability;
     private @Nullable Double dailySnowProbability;
 
     private Builder() {}
@@ -153,24 +156,24 @@ public final class ProbabilityThresholds extends Model {
     }
 
     /**
-     * Sets {@link ProbabilityThresholds#dailyPrecipProbability()}. Required.
+     * Sets {@link ProbabilityThresholds#dailyPrecipitationProbability()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder dailyPrecipProbability(double value) {
-      this.dailyPrecipProbability = value;
+    public Builder dailyPrecipitationProbability(double value) {
+      this.dailyPrecipitationProbability = value;
       return this;
     }
 
     /**
-     * Sets {@link ProbabilityThresholds#dailyPrecipOccurrenceProbability()}. Required.
+     * Sets {@link ProbabilityThresholds#dailyPrecipitationOccurrenceProbability()}. Required.
      *
      * @param value the value
      * @return this builder
      */
-    public Builder dailyPrecipOccurrenceProbability(double value) {
-      this.dailyPrecipOccurrenceProbability = value;
+    public Builder dailyPrecipitationOccurrenceProbability(double value) {
+      this.dailyPrecipitationOccurrenceProbability = value;
       return this;
     }
 

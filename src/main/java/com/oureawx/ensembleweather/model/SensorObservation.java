@@ -27,7 +27,7 @@ public final class SensorObservation extends Model {
   private final @Nullable Double windDirection;
   private final @Nullable Double pressure;
   private final @Nullable Double precipitation;
-  private final @Nullable Double precipRate;
+  private final @Nullable Double precipitationRate;
   private final @Nullable Double reflectivity;
   private final @Nullable Double pavementTemp;
   private final @Nullable Double subsurfaceTemp;
@@ -54,7 +54,7 @@ public final class SensorObservation extends Model {
     this.windDirection = b.windDirection;
     this.pressure = b.pressure;
     this.precipitation = b.precipitation;
-    this.precipRate = b.precipRate;
+    this.precipitationRate = b.precipitationRate;
     this.reflectivity = b.reflectivity;
     this.pavementTemp = b.pavementTemp;
     this.subsurfaceTemp = b.subsurfaceTemp;
@@ -97,7 +97,7 @@ public final class SensorObservation extends Model {
     b.windDirection = this.windDirection;
     b.pressure = this.pressure;
     b.precipitation = this.precipitation;
-    b.precipRate = this.precipRate;
+    b.precipitationRate = this.precipitationRate;
     b.reflectivity = this.reflectivity;
     b.pavementTemp = this.pavementTemp;
     b.subsurfaceTemp = this.subsurfaceTemp;
@@ -224,10 +224,12 @@ public final class SensorObservation extends Model {
   /**
    * Radar precipitation rate: mm/h, or in/h (imperial).
    *
-   * @return the {@code precip_rate} value, or empty when the response omits it
+   * @return the {@code precipitation_rate} value, or empty when the response omits it
    */
-  public OptionalDouble precipRate() {
-    return precipRate == null ? OptionalDouble.empty() : OptionalDouble.of(precipRate);
+  public OptionalDouble precipitationRate() {
+    return precipitationRate == null
+        ? OptionalDouble.empty()
+        : OptionalDouble.of(precipitationRate);
   }
 
   /**
@@ -258,7 +260,7 @@ public final class SensorObservation extends Model {
   }
 
   /**
-   * M, or ft (imperial).
+   * M, or statute miles (imperial; it was ft).
    *
    * @return the {@code visibility} value, or empty when the response omits it
    */
@@ -355,7 +357,7 @@ public final class SensorObservation extends Model {
       windDirection,
       pressure,
       precipitation,
-      precipRate,
+      precipitationRate,
       reflectivity,
       pavementTemp,
       subsurfaceTemp,
@@ -389,7 +391,7 @@ public final class SensorObservation extends Model {
     "windDirection",
     "pressure",
     "precipitation",
-    "precipRate",
+    "precipitationRate",
     "reflectivity",
     "pavementTemp",
     "subsurfaceTemp",
@@ -418,7 +420,7 @@ public final class SensorObservation extends Model {
     private @Nullable Double windDirection;
     private @Nullable Double pressure;
     private @Nullable Double precipitation;
-    private @Nullable Double precipRate;
+    private @Nullable Double precipitationRate;
     private @Nullable Double reflectivity;
     private @Nullable Double pavementTemp;
     private @Nullable Double subsurfaceTemp;
@@ -567,13 +569,13 @@ public final class SensorObservation extends Model {
     }
 
     /**
-     * Sets {@link SensorObservation#precipRate()}.
+     * Sets {@link SensorObservation#precipitationRate()}.
      *
      * @param value the value, or null for absent
      * @return this builder
      */
-    public Builder precipRate(@Nullable Double value) {
-      this.precipRate = value;
+    public Builder precipitationRate(@Nullable Double value) {
+      this.precipitationRate = value;
       return this;
     }
 

@@ -4,22 +4,29 @@ package com.oureawx.ensembleweather.model;
 import java.util.Optional;
 
 /**
- * Which placement fills an ad slot.
+ * The reporting status of a station.
  *
  * <p>The API adds values within v1, so a value this SDK version does not know parses to {@link
  * #UNKNOWN}, and the model keeps the raw string (its {@code ...AsString()} accessor).
  */
-public enum AdSlotKind {
-  /** {@code house}. */
-  HOUSE("house"),
-  /** {@code third_party}. */
-  THIRD_PARTY("third_party"),
-  /** A value this SDK version does not know; read the model's raw string. */
+public enum StationStatus {
+  /** {@code active}. */
+  ACTIVE("active"),
+  /** {@code intermittent}. */
+  INTERMITTENT("intermittent"),
+  /** {@code inactive}. */
+  INACTIVE("inactive"),
+  /** {@code decommissioned}. */
+  DECOMMISSIONED("decommissioned"),
+  /**
+   * {@code unknown} on the wire, or a value this SDK version does not know; read the model's raw
+   * string to tell them apart.
+   */
   UNKNOWN("");
 
   private final String value;
 
-  AdSlotKind(String value) {
+  StationStatus(String value) {
     this.value = value;
   }
 
@@ -38,8 +45,8 @@ public enum AdSlotKind {
    * @param value the wire value
    * @return the matching constant, or {@link #UNKNOWN}
    */
-  public static AdSlotKind fromWireValue(String value) {
-    for (AdSlotKind c : values()) {
+  public static StationStatus fromWireValue(String value) {
+    for (StationStatus c : values()) {
       if (!c.value.isEmpty() && c.value.equals(value)) {
         return c;
       }
