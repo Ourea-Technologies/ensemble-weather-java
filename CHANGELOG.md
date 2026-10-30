@@ -12,6 +12,11 @@ Moves to the v1 contract live on api.oureawx.com (ensemble-weather-spec
 
 ### Changed
 
+- The coordinate overloads have their own names, following the operation
+  ids: `getCurrent(Coordinates, ...)` is `getPointCurrent`, `getAlerts(Coordinates)`
+  is `getPointAlerts` and `getNearby(Coordinates, ...)` is `getPointNearby`, each
+  with its `...Async` twin, beside `getPointForecast`. The `LocationId`
+  overloads keep their names. There are no aliases.
 - `precip_*` is `precipitation_*` everywhere: `DailyForecast`
   `totalPrecipitation()`, `totalPrecipitationIfWet()`,
   `precipitationProbability()`, `precipitationOccurrenceProbability()`,

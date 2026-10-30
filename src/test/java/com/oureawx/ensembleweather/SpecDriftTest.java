@@ -143,11 +143,12 @@ class SpecDriftTest {
         });
     CALLS.put("getPointForecast", c -> c.getPointForecast(point, all));
     CALLS.put("getCurrentConditions", c -> c.getCurrent(x, current));
-    CALLS.put("getCurrentByCoordinates", c -> c.getCurrent(point, current));
+    CALLS.put("getCurrentByCoordinates", c -> c.getPointCurrent(point, current));
     CALLS.put("getLocationAlerts", c -> c.getAlerts(x));
-    CALLS.put("getAlertsByCoordinates", c -> c.getAlerts(Coordinates.of(45.3, -121.7)));
+    CALLS.put("getAlertsByCoordinates", c -> c.getPointAlerts(Coordinates.of(45.3, -121.7)));
     CALLS.put("getNearbyLocations", c -> c.getNearby(x, nearby));
-    CALLS.put("getNearbyByCoordinates", c -> c.getNearby(Coordinates.of(45.3, -121.7), nearby));
+    CALLS.put(
+        "getNearbyByCoordinates", c -> c.getPointNearby(Coordinates.of(45.3, -121.7), nearby));
     CALLS.put(
         "searchLocations",
         c ->

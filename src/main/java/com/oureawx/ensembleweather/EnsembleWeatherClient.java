@@ -489,8 +489,8 @@ public final class EnsembleWeatherClient {
    * @param options the options
    * @return the current conditions
    */
-  public CurrentResponse getCurrent(Coordinates at, CurrentOptions options) {
-    return join(getCurrentAsync(at, options));
+  public CurrentResponse getPointCurrent(Coordinates at, CurrentOptions options) {
+    return join(getPointCurrentAsync(at, options));
   }
 
   /**
@@ -499,18 +499,18 @@ public final class EnsembleWeatherClient {
    * @param at the point
    * @return the current conditions
    */
-  public CurrentResponse getCurrent(Coordinates at) {
-    return getCurrent(at, CurrentOptions.defaults());
+  public CurrentResponse getPointCurrent(Coordinates at) {
+    return getPointCurrent(at, CurrentOptions.defaults());
   }
 
   /**
-   * Asynchronously, {@link #getCurrent(Coordinates, CurrentOptions)}.
+   * Asynchronously, {@link #getPointCurrent(Coordinates, CurrentOptions)}.
    *
    * @param at the point
    * @param options the options
    * @return the current conditions, eventually
    */
-  public CompletableFuture<CurrentResponse> getCurrentAsync(
+  public CompletableFuture<CurrentResponse> getPointCurrentAsync(
       Coordinates at, CurrentOptions options) {
     return guard(
         () -> {
@@ -527,13 +527,13 @@ public final class EnsembleWeatherClient {
   }
 
   /**
-   * Asynchronously, {@link #getCurrent(Coordinates)}.
+   * Asynchronously, {@link #getPointCurrent(Coordinates)}.
    *
    * @param at the point
    * @return the current conditions, eventually
    */
-  public CompletableFuture<CurrentResponse> getCurrentAsync(Coordinates at) {
-    return getCurrentAsync(at, CurrentOptions.defaults());
+  public CompletableFuture<CurrentResponse> getPointCurrentAsync(Coordinates at) {
+    return getPointCurrentAsync(at, CurrentOptions.defaults());
   }
 
   /**
@@ -570,17 +570,17 @@ public final class EnsembleWeatherClient {
    * @param at the point, without an elevation
    * @return the alerts, possibly none
    */
-  public AlertsResponse getAlerts(Coordinates at) {
-    return join(getAlertsAsync(at));
+  public AlertsResponse getPointAlerts(Coordinates at) {
+    return join(getPointAlertsAsync(at));
   }
 
   /**
-   * Asynchronously, {@link #getAlerts(Coordinates)}.
+   * Asynchronously, {@link #getPointAlerts(Coordinates)}.
    *
    * @param at the point
    * @return the alerts, eventually
    */
-  public CompletableFuture<AlertsResponse> getAlertsAsync(Coordinates at) {
+  public CompletableFuture<AlertsResponse> getPointAlertsAsync(Coordinates at) {
     return guard(
         () ->
             call(
@@ -653,8 +653,8 @@ public final class EnsembleWeatherClient {
    * @param options the options
    * @return the locations, nearest first
    */
-  public NearbyPointResponse getNearby(Coordinates at, NearbyOptions options) {
-    return join(getNearbyAsync(at, options));
+  public NearbyPointResponse getPointNearby(Coordinates at, NearbyOptions options) {
+    return join(getPointNearbyAsync(at, options));
   }
 
   /**
@@ -663,18 +663,18 @@ public final class EnsembleWeatherClient {
    * @param at the point
    * @return the locations
    */
-  public NearbyPointResponse getNearby(Coordinates at) {
-    return getNearby(at, NearbyOptions.defaults());
+  public NearbyPointResponse getPointNearby(Coordinates at) {
+    return getPointNearby(at, NearbyOptions.defaults());
   }
 
   /**
-   * Asynchronously, {@link #getNearby(Coordinates, NearbyOptions)}.
+   * Asynchronously, {@link #getPointNearby(Coordinates, NearbyOptions)}.
    *
    * @param at the point
    * @param options the options
    * @return the locations, eventually
    */
-  public CompletableFuture<NearbyPointResponse> getNearbyAsync(
+  public CompletableFuture<NearbyPointResponse> getPointNearbyAsync(
       Coordinates at, NearbyOptions options) {
     return guard(
         () -> {
@@ -691,13 +691,13 @@ public final class EnsembleWeatherClient {
   }
 
   /**
-   * Asynchronously, {@link #getNearby(Coordinates)}.
+   * Asynchronously, {@link #getPointNearby(Coordinates)}.
    *
    * @param at the point
    * @return the locations, eventually
    */
-  public CompletableFuture<NearbyPointResponse> getNearbyAsync(Coordinates at) {
-    return getNearbyAsync(at, NearbyOptions.defaults());
+  public CompletableFuture<NearbyPointResponse> getPointNearbyAsync(Coordinates at) {
+    return getPointNearbyAsync(at, NearbyOptions.defaults());
   }
 
   // ---------------------------------------------------------------- search and lists

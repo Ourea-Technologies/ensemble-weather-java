@@ -137,7 +137,7 @@ class ClientTest {
             ExecutionException.class, () -> c.getAlertsAsync(LocationId.of("or", "x")).get());
     assertInstanceOf(NotFoundException.class, e.getCause());
     // A usage error is a failed future, never a synchronous throw from an async method.
-    CompletableFuture<?> usage = c.getAlertsAsync(Coordinates.of(1, 2, 3));
+    CompletableFuture<?> usage = c.getPointAlertsAsync(Coordinates.of(1, 2, 3));
     assertInstanceOf(
         UsageException.class, assertThrows(ExecutionException.class, usage::get).getCause());
   }
