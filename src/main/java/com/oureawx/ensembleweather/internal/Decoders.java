@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package com.oureawx.ensembleweather.internal;
 
-import com.oureawx.ensembleweather.model.*;
+import com.oureawx.ensembleweather.types.*;
 
 /**
  * Maps decoded JSON onto the model builders, field by field (no reflection, no type names from
@@ -27,6 +27,16 @@ public final class Decoders {
     b.onset(o.optInstant("onset"));
     b.expires(o.instant("expires"));
     b.ends(o.optInstant("ends"));
+    b.sent(o.optInstant("sent"));
+    b.messageType(o.optString("message_type"));
+    b.references(o.stringList("references"));
+    b.senderName(o.optString("sender_name"));
+    b.areaDesc(o.optString("area_desc"));
+    b.description(o.optString("description"));
+    b.instruction(o.optString("instruction"));
+    b.sourceUrl(o.optString("source_url"));
+    b.eventKey(o.optString("event_key"));
+    b.vtecAction(o.optString("vtec_action"));
     return b.build();
   }
 
@@ -39,9 +49,9 @@ public final class Decoders {
   public static AlertsResponse alertsResponse(JsonFields o) {
     AlertsResponse.Builder b = AlertsResponse.builder();
     b.location(o.object("location", Decoders::locationRef));
-    b.alertCount(o.integer("alert_count"));
+    b.count(o.integer("alert_count"));
     b.asOf(o.instant("as_of"));
-    b.alerts(o.list("alerts", Decoders::activeAlert));
+    b.items(o.list("alerts", Decoders::activeAlert));
     b.attribution(o.object("attribution", Decoders::responseAttribution));
     return b.build();
   }
@@ -116,10 +126,11 @@ public final class Decoders {
   public static CatalogElevation catalogElevation(JsonFields o) {
     CatalogElevation.Builder b = CatalogElevation.builder();
     b.label(o.string("label"));
-    b.elevationM(o.number("elevation_m"));
+    b.heightM(o.number("elevation_m"));
     b.latOverride(o.optNumber("lat_override"));
     b.lonOverride(o.optNumber("lon_override"));
     b.isDefault(o.bool("is_default"));
+    b.displayName(o.optString("display_name"));
     return b.build();
   }
 
@@ -217,7 +228,7 @@ public final class Decoders {
     b.slug(o.string("slug"));
     b.name(o.string("name"));
     b.networkAsString(o.string("network"));
-    b.stationStatusAsString(o.string("station_status"));
+    b.statusAsString(o.string("station_status"));
     b.distanceKm(o.optNumber("distance_km"));
     b.elevationDiffM(o.optNumber("elevation_diff_m"));
     b.isPrimary(o.bool("is_primary"));
@@ -272,7 +283,7 @@ public final class Decoders {
     b.body(o.json("body"));
     b.slot(o.string("slot"));
     b.displayOrder(o.integer("display_order"));
-    b.resolvedLocale(o.string("resolved_locale"));
+    b.locale(o.string("resolved_locale"));
     b.updatedAt(o.instant("updated_at"));
     return b.build();
   }
@@ -297,17 +308,17 @@ public final class Decoders {
     b.country(o.optString("country"));
     b.aliases(o.stringList("aliases"));
     b.networkAsString(o.optString("network"));
-    b.sourceStationId(o.optString("source_station_id"));
+    b.sourceId(o.optString("source_station_id"));
     b.elevationMslM(o.optNumber("elevation_msl_m"));
     b.sensorHeightAglM(o.optNumber("sensor_height_agl_m"));
     b.sensorCapabilities(o.stringList("sensor_capabilities"));
-    b.stationStatusAsString(o.optString("station_status"));
+    b.statusAsString(o.optString("station_status"));
     b.lastReportAt(o.optInstant("last_report_at"));
     b.lastReportSummary(o.optJson("last_report_summary"));
     b.installDate(o.optDate("install_date"));
     b.decommissionDate(o.optDate("decommission_date"));
     b.updateFrequencyMinutes(o.optInteger("update_frequency_minutes"));
-    b.stationUrl(o.optString("station_url"));
+    b.url(o.optString("station_url"));
     b.dataUrl(o.optString("data_url"));
     b.descriptionShort(o.optString("description_short"));
     b.descriptionLong(o.optString("description_long"));
@@ -338,17 +349,17 @@ public final class Decoders {
     b.country(o.optString("country"));
     b.aliases(o.stringList("aliases"));
     b.networkAsString(o.optString("network"));
-    b.sourceStationId(o.optString("source_station_id"));
+    b.sourceId(o.optString("source_station_id"));
     b.elevationMslM(o.optNumber("elevation_msl_m"));
     b.sensorHeightAglM(o.optNumber("sensor_height_agl_m"));
     b.sensorCapabilities(o.stringList("sensor_capabilities"));
-    b.stationStatusAsString(o.optString("station_status"));
+    b.statusAsString(o.optString("station_status"));
     b.lastReportAt(o.optInstant("last_report_at"));
     b.lastReportSummary(o.optJson("last_report_summary"));
     b.installDate(o.optDate("install_date"));
     b.decommissionDate(o.optDate("decommission_date"));
     b.updateFrequencyMinutes(o.optInteger("update_frequency_minutes"));
-    b.stationUrl(o.optString("station_url"));
+    b.url(o.optString("station_url"));
     b.dataUrl(o.optString("data_url"));
     b.descriptionShort(o.optString("description_short"));
     b.descriptionLong(o.optString("description_long"));
@@ -361,6 +372,7 @@ public final class Decoders {
     b.primaryLocation(o.optObject("primary_location", Decoders::catalogPrimaryLocation));
     b.template(o.optObject("template", Decoders::catalogTemplateSummary));
     b.content(o.list("content", Decoders::catalogResolvedEntry));
+    b.indexable(o.bool("indexable"));
     return b.build();
   }
 
@@ -387,7 +399,7 @@ public final class Decoders {
     CatalogTemplateSummary.Builder b = CatalogTemplateSummary.builder();
     b.id(o.string("id"));
     b.locationTypeAsString(o.optString("location_type"));
-    b.templateVariantAsString(o.optString("template_variant"));
+    b.variantAsString(o.optString("template_variant"));
     b.spec(o.list("spec", Decoders::cmsTemplateSection));
     return b.build();
   }
@@ -448,9 +460,9 @@ public final class Decoders {
     b.time(o.instant("time"));
     b.temperature(o.number("temperature"));
     b.feelsLike(o.optNumber("feels_like"));
-    b.conditionAsString(o.string("condition"));
-    b.conditionText(o.string("condition_text"));
-    b.conditionIconAsString(o.string("condition_icon"));
+    b.codeAsString(o.string("condition"));
+    b.text(o.string("condition_text"));
+    b.iconAsString(o.string("condition_icon"));
     b.windSpeed(o.number("wind_speed"));
     b.windGust(o.optNumber("wind_gust"));
     b.windDirection(o.number("wind_direction"));
@@ -459,6 +471,8 @@ public final class Decoders {
     b.precipitationProbability(o.optNumber("precipitation_probability"));
     b.sourceAsString(o.string("source"));
     b.station(o.optObject("station", Decoders::currentStation));
+    b.measured(o.bool("measured"));
+    b.cloudCover(o.optNumber("cloud_cover"));
     return b.build();
   }
 
@@ -475,13 +489,15 @@ public final class Decoders {
     b.alertsAsOf(o.instant("alerts_as_of"));
     b.sensorCount(o.integer("sensor_count"));
     b.sensors(o.list("sensors", Decoders::sensorObservation));
-    b.current(o.optObject("current", Decoders::currentConditions));
+    b.now(o.optObject("current", Decoders::currentConditions));
     b.asOf(o.instant("as_of"));
     b.modelRunInitializedAt(o.optInstant("model_run_initialized_at"));
     b.nowcastHours(o.list("nowcast_hours", Decoders::timeSeriesPoint));
     b.unitsAsString(o.string("units"));
     b.attribution(o.object("attribution", Decoders::responseAttribution));
     b.nowcastUnavailableAsStrings(o.stringList("nowcast_unavailable"));
+    b.summary(o.optObject("summary", Decoders::placeSummary));
+    b.pass(o.optObject("pass", Decoders::passForecast));
     return b.build();
   }
 
@@ -493,9 +509,10 @@ public final class Decoders {
    */
   public static CurrentStation currentStation(JsonFields o) {
     CurrentStation.Builder b = CurrentStation.builder();
-    b.stationId(o.string("station_id"));
+    b.id(o.string("station_id"));
     b.name(o.string("name"));
     b.observationTime(o.instant("observation_time"));
+    b.calm(o.bool("calm"));
     return b.build();
   }
 
@@ -548,6 +565,16 @@ public final class Decoders {
     b.stormOrientationDescription(o.optString("storm_orientation_description"));
     b.astro(o.object("astro", Decoders::dailyAstro));
     b.temperatureClimatology(o.optObject("temperature_climatology", Decoders::dayClimatology));
+    b.coveredFrom(o.optInstant("covered_from"));
+    b.measuredPrecipitation(o.optObject("measured_precipitation", Decoders::measuredPrecipitation));
+    b.snowCharacterAsString(o.optString("snow_character"));
+    b.slr(o.optNumber("slr"));
+    b.snowLevelRange(o.optObject("snow_level_range", Decoders::snowLevelRange));
+    b.snowLevelWetBulb(o.optObject("snow_level_wet_bulb", Decoders::quantiles));
+    b.snowLevelWetBulbRange(o.optObject("snow_level_wet_bulb_range", Decoders::snowLevelRange));
+    b.normal(o.optObject("normal", Decoders::dayNormal));
+    b.departure(o.optObject("departure", Decoders::dayDeparture));
+    b.percentile(o.optObject("percentile", Decoders::dayPercentile));
     return b.build();
   }
 
@@ -589,12 +616,17 @@ public final class Decoders {
   public static ElevationForecast elevationForecast(JsonFields o) {
     ElevationForecast.Builder b = ElevationForecast.builder();
     b.name(o.string("name"));
-    b.elevation(o.number("elevation"));
+    b.height(o.number("elevation"));
     b.lat(o.number("lat"));
     b.lon(o.number("lon"));
     b.hourly(o.list("hourly", Decoders::timeSeriesPoint));
     b.daily(o.list("daily", Decoders::dailyForecast));
     b.snowOutlook(o.optObject("snow_outlook", Decoders::snowOutlook));
+    b.displayName(o.optString("display_name"));
+    b.nearestSensors(o.list("nearest_sensors", Decoders::nearestSensor));
+    b.precipitationOutlook(o.optObject("precipitation_outlook", Decoders::precipOutlook));
+    b.plume(o.optObject("plume", Decoders::memberPlume));
+    b.snowOnGround(o.optObject("snow_on_ground", Decoders::snowOnGround));
     return b.build();
   }
 
@@ -621,6 +653,7 @@ public final class Decoders {
     b.mslp(o.optObject("mslp", Decoders::quantiles));
     b.cape(o.optObject("cape", Decoders::quantiles));
     b.relativeHumidity(o.optObject("relative_humidity", Decoders::quantiles));
+    b.snowLevelWetBulb(o.optObject("snow_level_wet_bulb", Decoders::quantiles));
     return b.build();
   }
 
@@ -637,6 +670,8 @@ public final class Decoders {
     b.timeseries(o.list("timeseries", Decoders::timeSeriesPoint));
     b.daily(o.list("daily", Decoders::dailyForecast));
     b.snowOutlook(o.optObject("snow_outlook", Decoders::snowOutlook));
+    b.precipitationOutlook(o.optObject("precipitation_outlook", Decoders::precipOutlook));
+    b.plume(o.optObject("plume", Decoders::memberPlume));
     return b.build();
   }
 
@@ -652,11 +687,11 @@ public final class Decoders {
     b.probabilities(o.list("probabilities", Decoders::probabilityResult));
     b.windowTotals(o.list("window_totals", Decoders::windowTotal));
     b.applied(o.optObject("applied", Decoders::appliedOptions));
-    b.location(o.object("location", Decoders::locationRef));
+    b.location(o.object("location", Decoders::forecastLocation));
     b.modelRun(o.object("model_run", Decoders::modelRunInfo));
     b.unitsAsString(o.string("units"));
-    b.forecast(o.object("forecast", Decoders::forecastData));
-    b.elevationForecasts(o.list("elevation_forecasts", Decoders::elevationForecast));
+    b.series(o.object("forecast", Decoders::forecastData));
+    b.elevations(o.list("elevation_forecasts", Decoders::elevationForecast));
     b.nowcastApplied(o.bool("nowcast_applied"));
     b.nowcastUnavailableAsStrings(o.stringList("nowcast_unavailable"));
     b.membersViewAsString(o.optString("members_view"));
@@ -665,6 +700,8 @@ public final class Decoders {
     b.point(o.optObject("point", Decoders::pointInfo));
     b.current(o.optObject("current", Decoders::currentConditions));
     b.attribution(o.object("attribution", Decoders::responseAttribution));
+    b.avalanche(o.optObject("avalanche", Decoders::avalancheForecast));
+    b.snowOnGround(o.optObject("snow_on_ground", Decoders::snowOnGround));
     return b.build();
   }
 
@@ -741,20 +778,6 @@ public final class Decoders {
   }
 
   /**
-   * Decodes a {@code LocationElevation}.
-   *
-   * @param o the object
-   * @return the model
-   */
-  public static LocationElevation locationElevation(JsonFields o) {
-    LocationElevation.Builder b = LocationElevation.builder();
-    b.name(o.string("name"));
-    b.elevation(o.number("elevation"));
-    b.isDefault(o.optBool("default"));
-    return b.build();
-  }
-
-  /**
    * Decodes a {@code LocationRef}.
    *
    * @param o the object
@@ -791,7 +814,7 @@ public final class Decoders {
     b.timezone(o.zone("timezone"));
     b.county(o.string("county"));
     b.description(o.optString("description"));
-    b.elevations(o.list("elevations", Decoders::locationElevation));
+    b.elevations(o.list("elevations", Decoders::elevationSummary));
     return b.build();
   }
 
@@ -805,7 +828,7 @@ public final class Decoders {
     LocationsResponse.Builder b = LocationsResponse.builder();
     b.state(o.string("state"));
     b.count(o.integer("count"));
-    b.locations(o.list("locations", Decoders::locationSummary));
+    b.items(o.list("locations", Decoders::locationSummary));
     b.nextCursor(o.optString("next_cursor"));
     return b.build();
   }
@@ -818,7 +841,7 @@ public final class Decoders {
    */
   public static MemberForecast memberForecast(JsonFields o) {
     MemberForecast.Builder b = MemberForecast.builder();
-    b.memberId(o.integer("member_id"));
+    b.id(o.integer("member_id"));
     b.temperature(o.optNumber("temperature"));
     b.precipitation(o.optNumber("precipitation"));
     b.precipitationHours(o.optInteger("precipitation_hours"));
@@ -829,6 +852,7 @@ public final class Decoders {
     b.snowfall(o.optNumber("snowfall"));
     b.cumulativePrecipitation(o.optNumber("cumulative_precipitation"));
     b.cumulativeSnowfall(o.optNumber("cumulative_snowfall"));
+    b.snowLevelWetBulb(o.optNumber("snow_level_wet_bulb"));
     return b.build();
   }
 
@@ -840,8 +864,8 @@ public final class Decoders {
    */
   public static MembersCumulative membersCumulative(JsonFields o) {
     MembersCumulative.Builder b = MembersCumulative.builder();
-    b.precipitation(o.optObject("precipitation", Decoders::quantiles));
-    b.snowfall(o.optObject("snowfall", Decoders::quantiles));
+    b.precipitation(o.optObject("precipitation", Decoders::memberQuantiles));
+    b.snowfall(o.optObject("snowfall", Decoders::memberQuantiles));
     return b.build();
   }
 
@@ -856,6 +880,8 @@ public final class Decoders {
     b.id(o.string("id"));
     b.cycle(o.optInstant("cycle"));
     b.members(o.optInteger("members"));
+    b.displayMembers(o.integerList("display_members"));
+    b.displayMembersSnowfall(o.optString("display_members_snowfall"));
     return b.build();
   }
 
@@ -868,7 +894,7 @@ public final class Decoders {
   public static ModelMembers modelMembers(JsonFields o) {
     ModelMembers.Builder b = ModelMembers.builder();
     b.id(o.string("id"));
-    b.members(o.list("members", Decoders::memberForecast));
+    b.items(o.list("members", Decoders::memberForecast));
     return b.build();
   }
 
@@ -904,6 +930,7 @@ public final class Decoders {
     b.slr(o.optObject("slr", Decoders::quantiles));
     b.snowfall(o.optObject("snowfall", Decoders::quantiles));
     b.interpolated(o.optBool("interpolated"));
+    b.snowLevelWetBulb(o.optObject("snow_level_wet_bulb", Decoders::quantiles));
     return b.build();
   }
 
@@ -925,7 +952,7 @@ public final class Decoders {
     b.timezone(o.zone("timezone"));
     b.county(o.string("county"));
     b.description(o.optString("description"));
-    b.elevations(o.list("elevations", Decoders::locationElevation));
+    b.elevations(o.list("elevations", Decoders::elevationSummary));
     b.distanceKm(o.number("distance_km"));
     return b.build();
   }
@@ -938,10 +965,10 @@ public final class Decoders {
    */
   public static NearbyLocationsResponse nearbyLocationsResponse(JsonFields o) {
     NearbyLocationsResponse.Builder b = NearbyLocationsResponse.builder();
-    b.location(o.object("location", Decoders::locationSummary));
+    b.origin(o.object("location", Decoders::locationSummary));
     b.radiusKm(o.number("radius_km"));
     b.count(o.integer("count"));
-    b.locations(o.list("locations", Decoders::nearbyLocation));
+    b.items(o.list("locations", Decoders::nearbyLocation));
     return b.build();
   }
 
@@ -957,7 +984,7 @@ public final class Decoders {
     b.lon(o.number("lon"));
     b.radiusKm(o.number("radius_km"));
     b.count(o.integer("count"));
-    b.locations(o.list("locations", Decoders::nearbyLocation));
+    b.items(o.list("locations", Decoders::nearbyLocation));
     return b.build();
   }
 
@@ -1024,6 +1051,7 @@ public final class Decoders {
     b.kindAsString(o.string("kind"));
     b.chance(o.number("chance"));
     b.amount(o.optNumber("amount"));
+    b.snowAmount(o.optNumber("snow_amount"));
     return b.build();
   }
 
@@ -1058,7 +1086,7 @@ public final class Decoders {
     b.aggregationAsString(o.string("aggregation"));
     b.from(o.optInstant("from"));
     b.to(o.optInstant("to"));
-    b.probability(o.optNumber("probability"));
+    b.value(o.optNumber("probability"));
     b.members(o.integer("members"));
     b.nullReasonAsString(o.optString("null_reason"));
     return b.build();
@@ -1074,10 +1102,9 @@ public final class Decoders {
     ProbabilityThresholds.Builder b = ProbabilityThresholds.builder();
     b.hourlyPrecipitation(o.number("hourly_precipitation"));
     b.hourlySnowfall(o.number("hourly_snowfall"));
-    b.dailyPrecipitationProbability(o.number("daily_precipitation_probability"));
-    b.dailyPrecipitationOccurrenceProbability(
-        o.number("daily_precipitation_occurrence_probability"));
-    b.dailySnowProbability(o.number("daily_snow_probability"));
+    b.dailyPrecipitation(o.number("daily_precipitation_probability"));
+    b.dailyPrecipitationOccurrence(o.number("daily_precipitation_occurrence_probability"));
+    b.dailySnow(o.number("daily_snow_probability"));
     return b.build();
   }
 
@@ -1136,7 +1163,7 @@ public final class Decoders {
   public static RunsResponse runsResponse(JsonFields o) {
     RunsResponse.Builder b = RunsResponse.builder();
     b.served(o.optObject("served", Decoders::servedRun));
-    b.runs(o.list("runs", Decoders::runInfo));
+    b.items(o.list("runs", Decoders::runInfo));
     b.count(o.integer("count"));
     b.nextCursor(o.optString("next_cursor"));
     return b.build();
@@ -1160,6 +1187,7 @@ public final class Decoders {
     b.typeAsString(o.string("type"));
     b.timezone(o.zone("timezone"));
     b.county(o.string("county"));
+    b.explore(o.optObject("explore", Decoders::exploreValue));
     return b.build();
   }
 
@@ -1200,7 +1228,7 @@ public final class Decoders {
     b.stationId(o.string("station_id"));
     b.name(o.string("name"));
     b.source(o.string("source"));
-    b.observationTime(o.instant("observation_time"));
+    b.observedAt(o.instant("observation_time"));
     b.temperature(o.optNumber("temperature"));
     b.dewpoint(o.optNumber("dewpoint"));
     b.relativeHumidity(o.optNumber("relative_humidity"));
@@ -1222,6 +1250,8 @@ public final class Decoders {
     b.snowfall(o.optNumber("snowfall"));
     b.solarRadiation(o.optNumber("solar_radiation"));
     b.pavementCondition(o.optString("pavement_condition"));
+    b.distanceKm(o.number("distance_km"));
+    b.elevationDiff(o.optNumber("elevation_diff"));
     return b.build();
   }
 
@@ -1251,6 +1281,7 @@ public final class Decoders {
     b.next7d(o.optNumber("next_7d"));
     b.overnight4pm9am(o.optNumber("overnight_4pm_9am"));
     b.quantiles(o.optObject("quantiles", Decoders::snowOutlookQuantiles));
+    b.next72h(o.optNumber("next_72h"));
     return b.build();
   }
 
@@ -1265,6 +1296,7 @@ public final class Decoders {
     b.next24h(o.optObject("next_24h", Decoders::quantiles));
     b.next48h(o.optObject("next_48h", Decoders::quantiles));
     b.next7d(o.optObject("next_7d", Decoders::quantiles));
+    b.next72h(o.optObject("next_72h", Decoders::quantiles));
     return b.build();
   }
 
@@ -1293,6 +1325,11 @@ public final class Decoders {
     b.membersCumulative(o.optObject("members_cumulative", Decoders::membersCumulative));
     b.cumulativePrecipitation(o.optNumber("cumulative_precipitation"));
     b.cumulativeSnowfall(o.optNumber("cumulative_snowfall"));
+    b.measured(o.bool("measured"));
+    b.snowCharacterAsString(o.optString("snow_character"));
+    b.membersSpread(o.optObject("members_spread", Decoders::membersSpread));
+    b.members6h(o.optObject("members_6h", Decoders::membersCumulative));
+    b.precipitationByType(o.optObject("precipitation_by_type", Decoders::precipitationByType));
     return b.build();
   }
 
@@ -1306,14 +1343,1184 @@ public final class Decoders {
     WindowTotal.Builder b = WindowTotal.builder();
     b.term(o.string("term"));
     b.variableAsString(o.string("variable"));
-    b.windowStartHours(o.integer("window_start_hours"));
-    b.windowEndHours(o.integer("window_end_hours"));
+    b.startHours(o.integer("window_start_hours"));
+    b.endHours(o.integer("window_end_hours"));
     b.aggregationAsString(o.string("aggregation"));
     b.from(o.optInstant("from"));
     b.to(o.optInstant("to"));
     b.quantiles(o.optObject("quantiles", Decoders::quantiles));
     b.members(o.integer("members"));
     b.nullReasonAsString(o.optString("null_reason"));
+    b.method(o.optString("method"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ForecastLocation}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ForecastLocation forecastLocation(JsonFields o) {
+    ForecastLocation.Builder b = ForecastLocation.builder();
+    b.slug(o.optString("slug"));
+    b.state(o.string("state"));
+    b.name(o.string("name"));
+    b.lat(o.number("lat"));
+    b.lon(o.number("lon"));
+    b.elevationM(o.number("elevation_m"));
+    b.typeAsString(o.optString("type"));
+    b.timezone(o.zone("timezone"));
+    b.elevation(o.number("elevation"));
+    b.elevations(o.list("elevations", Decoders::elevationSummary));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ElevationSummary}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ElevationSummary elevationSummary(JsonFields o) {
+    ElevationSummary.Builder b = ElevationSummary.builder();
+    b.name(o.string("name"));
+    b.displayName(o.optString("display_name"));
+    b.height(o.number("elevation"));
+    b.isDefault(o.optBool("default"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code MemberQuantiles}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static MemberQuantiles memberQuantiles(JsonFields o) {
+    MemberQuantiles.Builder b = MemberQuantiles.builder();
+    b.mean(o.number("mean"));
+    b.p10(o.number("p10"));
+    b.p25(o.number("p25"));
+    b.p50(o.optNumber("p50"));
+    b.p75(o.number("p75"));
+    b.p90(o.number("p90"));
+    b.min(o.number("min"));
+    b.max(o.number("max"));
+    b.probability(o.optNumber("probability"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code MembersSpread}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static MembersSpread membersSpread(JsonFields o) {
+    MembersSpread.Builder b = MembersSpread.builder();
+    b.temperature(o.optObject("temperature", Decoders::memberQuantiles));
+    b.snowLevel(o.optObject("snow_level", Decoders::memberQuantiles));
+    b.snowLevelWetBulb(o.optObject("snow_level_wet_bulb", Decoders::memberQuantiles));
+    b.slr(o.optObject("slr", Decoders::memberQuantiles));
+    b.windSpeed(o.optObject("wind_speed", Decoders::memberQuantiles));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PrecipOutlook}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PrecipOutlook precipOutlook(JsonFields o) {
+    PrecipOutlook.Builder b = PrecipOutlook.builder();
+    b.next24h(o.optNumber("next_24h"));
+    b.next48h(o.optNumber("next_48h"));
+    b.next72h(o.optNumber("next_72h"));
+    b.next7d(o.optNumber("next_7d"));
+    b.quantiles(o.optObject("quantiles", Decoders::snowOutlookQuantiles));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PrecipitationByType}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PrecipitationByType precipitationByType(JsonFields o) {
+    PrecipitationByType.Builder b = PrecipitationByType.builder();
+    b.rain(o.number("rain"));
+    b.snow(o.number("snow"));
+    b.rainSnowMix(o.number("rain_snow_mix"));
+    b.freezingRain(o.number("freezing_rain"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowLevelRange}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowLevelRange snowLevelRange(JsonFields o) {
+    SnowLevelRange.Builder b = SnowLevelRange.builder();
+    b.low(o.number("low"));
+    b.high(o.number("high"));
+    b.mean(o.number("mean"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowOnGround}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowOnGround snowOnGround(JsonFields o) {
+    SnowOnGround.Builder b = SnowOnGround.builder();
+    b.beta(o.bool("beta"));
+    b.depth(o.number("depth"));
+    b.basis(o.string("basis"));
+    b.surface(o.optString("surface"));
+    b.validTime(o.instant("valid_time"));
+    b.generatedAt(o.instant("generated_at"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code DayNormal}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static DayNormal dayNormal(JsonFields o) {
+    DayNormal.Builder b = DayNormal.builder();
+    b.high(o.optNumber("high"));
+    b.low(o.optNumber("low"));
+    b.precipitation(o.optNumber("precipitation"));
+    b.source(o.string("source"));
+    b.distanceKm(o.number("distance_km"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code DayDeparture}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static DayDeparture dayDeparture(JsonFields o) {
+    DayDeparture.Builder b = DayDeparture.builder();
+    b.high(o.optNumber("high"));
+    b.low(o.optNumber("low"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code DayPercentile}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static DayPercentile dayPercentile(JsonFields o) {
+    DayPercentile.Builder b = DayPercentile.builder();
+    b.high(o.optNumber("high"));
+    b.low(o.optNumber("low"));
+    b.precipitation(o.optNumber("precipitation"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AvalancheForecast}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AvalancheForecast avalancheForecast(JsonFields o) {
+    AvalancheForecast.Builder b = AvalancheForecast.builder();
+    b.centerId(o.string("center_id"));
+    b.centerName(o.string("center_name"));
+    b.zoneId(o.longInteger("zone_id"));
+    b.zoneName(o.string("zone_name"));
+    b.dangerLevel(o.optInteger("danger_level"));
+    b.dangerLabel(o.optString("danger_label"));
+    b.status(o.string("status"));
+    b.validFrom(o.optInstant("valid_from"));
+    b.validUntil(o.optInstant("valid_until"));
+    b.url(o.string("forecast_url"));
+    b.centerUrl(o.string("center_url"));
+    b.attribution(o.string("attribution"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code MemberPlume}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static MemberPlume memberPlume(JsonFields o) {
+    MemberPlume.Builder b = MemberPlume.builder();
+    b.headline(o.object("headline", Decoders::plumeHeadline));
+    b.bands(o.object("bands", Decoders::plumeBands));
+    b.models(o.list("models", Decoders::modelColumns));
+    b.pool(o.optObject("members", Decoders::pooledColumns));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PlumeHeadline}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PlumeHeadline plumeHeadline(JsonFields o) {
+    PlumeHeadline.Builder b = PlumeHeadline.builder();
+    b.validTime(o.instantList("valid_time"));
+    b.temperature(o.nullableNumberList("temperature"));
+    b.snowLevel(o.nullableNumberList("snow_level"));
+    b.snowLevelWetBulb(o.nullableNumberList("snow_level_wet_bulb"));
+    b.cumulativePrecipitation(o.nullableNumberList("cumulative_precipitation"));
+    b.cumulativeSnowfall(o.nullableNumberList("cumulative_snowfall"));
+    b.cumulativeSnowfall10to1(o.nullableNumberList("cumulative_snowfall_10to1"));
+    b.windSpeed(o.nullableNumberList("wind_speed"));
+    b.snowfall6h(o.nullableNumberList("snowfall_6h"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PlumeBands}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PlumeBands plumeBands(JsonFields o) {
+    PlumeBands.Builder b = PlumeBands.builder();
+    b.validTime(o.instantList("valid_time"));
+    b.cumulativePrecipitation(o.object("cumulative_precipitation", Decoders::bandColumns));
+    b.cumulativeSnowfall(o.object("cumulative_snowfall", Decoders::bandColumns));
+    b.cumulativeSnowfall10to1(o.object("cumulative_snowfall_10to1", Decoders::bandColumns));
+    b.temperature(o.object("temperature", Decoders::bandColumns));
+    b.snowLevel(o.object("snow_level", Decoders::bandColumns));
+    b.snowLevelWetBulb(o.object("snow_level_wet_bulb", Decoders::bandColumns));
+    b.precipitation6h(o.object("precipitation_6h", Decoders::bandColumns));
+    b.snowfall6h(o.object("snowfall_6h", Decoders::bandColumns));
+    b.slr(o.optObject("slr", Decoders::bandColumns));
+    b.windSpeed(o.optObject("wind_speed", Decoders::bandColumns));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code BandColumns}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static BandColumns bandColumns(JsonFields o) {
+    BandColumns.Builder b = BandColumns.builder();
+    b.mean(o.nullableNumberList("mean"));
+    b.min(o.nullableNumberList("min"));
+    b.p10(o.nullableNumberList("p10"));
+    b.p25(o.nullableNumberList("p25"));
+    b.p50(o.nullableNumberList("p50"));
+    b.p75(o.nullableNumberList("p75"));
+    b.p90(o.nullableNumberList("p90"));
+    b.max(o.nullableNumberList("max"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PooledColumns}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PooledColumns pooledColumns(JsonFields o) {
+    PooledColumns.Builder b = PooledColumns.builder();
+    b.validTime(o.instantList("valid_time"));
+    b.temperature(o.nullableNumberLists("temperature"));
+    b.precipitation(o.nullableNumberLists("precipitation"));
+    b.precipitationHours(o.nullableIntegerLists("precipitation_hours"));
+    b.cumulativePrecipitation(o.nullableNumberLists("cumulative_precipitation"));
+    b.snowLevel(o.nullableNumberLists("snow_level"));
+    b.snowLevelWetBulb(o.nullableNumberLists("snow_level_wet_bulb"));
+    b.snowfall(o.nullableNumberLists("snowfall"));
+    b.cumulativeSnowfall(o.nullableNumberLists("cumulative_snowfall"));
+    b.slr(o.nullableNumberLists("slr"));
+    b.cumulativePrecipitationBandMembers(o.integerList("cumulative_precipitation_band_members"));
+    b.cumulativeSnowfallBandMembers(o.integerList("cumulative_snowfall_band_members"));
+    b.cumulativeSnowfall10to1BandMembers(o.integerList("cumulative_snowfall_10to1_band_members"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ModelColumns}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ModelColumns modelColumns(JsonFields o) {
+    ModelColumns.Builder b = ModelColumns.builder();
+    b.id(o.string("id"));
+    b.validTime(o.instantList("valid_time"));
+    b.memberIds(o.integerList("member_ids"));
+    b.temperature(o.nullableNumberLists("temperature"));
+    b.precipitation(o.nullableNumberLists("precipitation"));
+    b.precipitationHours(o.nullableIntegerLists("precipitation_hours"));
+    b.cumulativePrecipitation(o.nullableNumberLists("cumulative_precipitation"));
+    b.snowLevel(o.nullableNumberLists("snow_level"));
+    b.snowLevelWetBulb(o.nullableNumberLists("snow_level_wet_bulb"));
+    b.snowfall(o.nullableNumberLists("snowfall"));
+    b.cumulativeSnowfall(o.nullableNumberLists("cumulative_snowfall"));
+    b.cumulativeSnowfallP50(o.nullableNumberList("cumulative_snowfall_p50"));
+    b.cumulativeSnowfall10to1P50(o.nullableNumberList("cumulative_snowfall_10to1_p50"));
+    b.temperatureMean(o.nullableNumberList("temperature_mean"));
+    b.precipitationMean(o.nullableNumberList("precipitation_mean"));
+    b.cumulativePrecipitationMean(o.nullableNumberList("cumulative_precipitation_mean"));
+    b.snowLevelMean(o.nullableNumberList("snow_level_mean"));
+    b.snowLevelWetBulbMean(o.nullableNumberList("snow_level_wet_bulb_mean"));
+    b.snowfallMean(o.nullableNumberList("snowfall_mean"));
+    b.cumulativeSnowfallMean(o.nullableNumberList("cumulative_snowfall_mean"));
+    b.cumulativeSnowfall10to1Mean(o.nullableNumberList("cumulative_snowfall_10to1_mean"));
+    b.windSpeedMean(o.nullableNumberList("wind_speed_mean"));
+    b.cumulativePrecipitationBandMemberIds(
+        o.integerList("cumulative_precipitation_band_member_ids"));
+    b.cumulativeSnowfallBandMemberIds(o.integerList("cumulative_snowfall_band_member_ids"));
+    b.cumulativeSnowfall10to1BandMemberIds(
+        o.integerList("cumulative_snowfall_10to1_band_member_ids"));
+    b.windSpeed(o.nullableNumberLists("wind_speed"));
+    b.windDirection(o.nullableNumberLists("wind_direction"));
+    b.slr(o.nullableNumberLists("slr"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PlaceSummary}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PlaceSummary placeSummary(JsonFields o) {
+    PlaceSummary.Builder b = PlaceSummary.builder();
+    b.shortText(o.string("short"));
+    b.longText(o.stringList("long"));
+    b.events(o.list("events", Decoders::summaryEvent));
+    b.elevationName(o.optString("elevation_name"));
+    b.elevation(o.number("elevation"));
+    b.run(o.instant("run"));
+    b.generatedAt(o.instant("generated_at"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SummaryEvent}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SummaryEvent summaryEvent(JsonFields o) {
+    SummaryEvent.Builder b = SummaryEvent.builder();
+    b.kind(o.string("kind"));
+    b.template(o.string("template"));
+    b.at(o.optInstant("at"));
+    b.until(o.optInstant("until"));
+    b.alertId(o.optString("alert_id"));
+    b.values(o.optObject("values", Decoders::summaryValues));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SummaryValues}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SummaryValues summaryValues(JsonFields o) {
+    SummaryValues.Builder b = SummaryValues.builder();
+    b.snowfall(o.optNumber("snowfall"));
+    b.snowfallP10(o.optNumber("snowfall_p10"));
+    b.snowfallP90(o.optNumber("snowfall_p90"));
+    b.snowfallWindow(o.optString("snowfall_window"));
+    b.temperature(o.optNumber("temperature"));
+    b.windGust(o.optNumber("wind_gust"));
+    b.precipitationProbability(o.optNumber("precipitation_probability"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassForecast}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassForecast passForecast(JsonFields o) {
+    PassForecast.Builder b = PassForecast.builder();
+    b.elevation(o.number("elevation"));
+    b.elevationM(o.number("elevation_m"));
+    b.from(o.instant("from"));
+    b.snow24h(o.object("snow_24h", Decoders::passSnow24h));
+    b.chances(o.object("chances", Decoders::passChances));
+    b.snowWindows(o.list("snow_windows", Decoders::passSnowWindow));
+    b.hours(o.list("hours", Decoders::passHour));
+    b.windows(o.object("windows", Decoders::passTravelWindows));
+    b.officialStatus(o.optObject("official_status", Decoders::passOfficialStatus));
+    b.roadSensors(o.list("road_sensors", Decoders::passRoadSensor));
+    b.cameras(o.list("cameras", Decoders::passCamera));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassSnow24h}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassSnow24h passSnow24h(JsonFields o) {
+    PassSnow24h.Builder b = PassSnow24h.builder();
+    b.total(o.optNumber("total"));
+    b.p10(o.optNumber("p10"));
+    b.p90(o.optNumber("p90"));
+    b.startsAt(o.optInstant("starts_at"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassChances}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassChances passChances(JsonFields o) {
+    PassChances.Builder b = PassChances.builder();
+    b.windowHours(o.integer("window_hours"));
+    b.from(o.instant("from"));
+    b.to(o.instant("to"));
+    b.pSnowGe1in(o.object("p_snow_ge_1in", Decoders::passChance));
+    b.pSnowGe6in(o.object("p_snow_ge_6in", Decoders::passChance));
+    b.pWetBelowFreezing(o.object("p_wet_below_freezing", Decoders::passChance));
+    b.pGustGt40mph(o.object("p_gust_gt_40mph", Decoders::passChance));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassChance}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassChance passChance(JsonFields o) {
+    PassChance.Builder b = PassChance.builder();
+    b.probability(o.optNumber("probability"));
+    b.threshold(o.number("threshold"));
+    b.precipitationThreshold(o.optNumber("precipitation_threshold"));
+    b.members(o.integer("members"));
+    b.method(o.string("method"));
+    b.nullReason(o.optString("null_reason"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassSnowWindow}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassSnowWindow passSnowWindow(JsonFields o) {
+    PassSnowWindow.Builder b = PassSnowWindow.builder();
+    b.start(o.instant("start"));
+    b.end(o.instant("end"));
+    b.total(o.number("total"));
+    b.p10(o.optNumber("p10"));
+    b.p90(o.optNumber("p90"));
+    b.pGe1in(o.optNumber("p_ge_1in"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassHour}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassHour passHour(JsonFields o) {
+    PassHour.Builder b = PassHour.builder();
+    b.time(o.instant("time"));
+    b.temperature(o.number("temperature"));
+    b.precipitation(o.number("precipitation"));
+    b.precipitationProbability(o.optNumber("precipitation_probability"));
+    b.precipitationType(o.optString("precipitation_type"));
+    b.snowfall(o.number("snowfall"));
+    b.snowLevel(o.optNumber("snow_level"));
+    b.snowLevelMargin(o.optNumber("snow_level_above_pass"));
+    b.freezingOnWetRoad(o.bool("freezing_on_wet_road"));
+    b.windSpeed(o.number("wind_speed"));
+    b.windGust(o.optNumber("wind_gust"));
+    b.gustOver40mph(o.bool("gust_over_40mph"));
+    b.blowingSnow(o.bool("blowing_snow"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassTravelWindows}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassTravelWindows passTravelWindows(JsonFields o) {
+    PassTravelWindows.Builder b = PassTravelWindows.builder();
+    b.horizonHours(o.integer("horizon_hours"));
+    b.leastWeather(o.optObject("least_weather", Decoders::passTravelWindow));
+    b.mostWeather(o.optObject("most_weather", Decoders::passTravelWindow));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassTravelWindow}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassTravelWindow passTravelWindow(JsonFields o) {
+    PassTravelWindow.Builder b = PassTravelWindow.builder();
+    b.start(o.instant("start"));
+    b.end(o.instant("end"));
+    b.snowfall(o.number("snowfall"));
+    b.freezingOnWetRoadHours(o.integer("freezing_on_wet_road_hours"));
+    b.maxWindGust(o.optNumber("max_wind_gust"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassOfficialStatus}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassOfficialStatus passOfficialStatus(JsonFields o) {
+    PassOfficialStatus.Builder b = PassOfficialStatus.builder();
+    b.source(o.string("source"));
+    b.attribution(o.string("attribution"));
+    b.url(o.string("url"));
+    b.checkedAt(o.instant("checked_at"));
+    b.stale(o.bool("stale"));
+    b.levelAsString(o.string("level"));
+    b.segments(o.list("segments", Decoders::passStatusSegment));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassStatusSegment}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassStatusSegment passStatusSegment(JsonFields o) {
+    PassStatusSegment.Builder b = PassStatusSegment.builder();
+    b.id(o.string("id"));
+    b.route(o.string("route"));
+    b.direction(o.string("direction"));
+    b.location(o.string("location"));
+    b.state(o.string("status"));
+    b.levelAsString(o.string("level"));
+    b.text(o.string("status_text"));
+    b.updatedAt(o.instant("updated_at"));
+    b.lat(o.number("lat"));
+    b.lon(o.number("lon"));
+    b.roadCondition(o.optString("road_condition"));
+    b.weatherCondition(o.optString("weather_condition"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassRoadSensor}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassRoadSensor passRoadSensor(JsonFields o) {
+    PassRoadSensor.Builder b = PassRoadSensor.builder();
+    b.stationId(o.string("station_id"));
+    b.name(o.string("name"));
+    b.source(o.string("source"));
+    b.attribution(o.string("attribution"));
+    b.distanceKm(o.number("distance_km"));
+    b.elevation(o.optNumber("elevation"));
+    b.elevationM(o.optNumber("elevation_m"));
+    b.observedAt(o.instant("observed_at"));
+    b.stale(o.bool("stale"));
+    b.pavementCondition(o.optString("pavement_condition"));
+    b.pavementTemp(o.optNumber("pavement_temp"));
+    b.subsurfaceTemp(o.optNumber("subsurface_temp"));
+    b.temperature(o.optNumber("temperature"));
+    b.windSpeed(o.optNumber("wind_speed"));
+    b.windGust(o.optNumber("wind_gust"));
+    b.windDirection(o.optNumber("wind_direction"));
+    b.visibility(o.optNumber("visibility"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code PassCamera}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static PassCamera passCamera(JsonFields o) {
+    PassCamera.Builder b = PassCamera.builder();
+    b.id(o.string("id"));
+    b.title(o.string("title"));
+    b.imageUrl(o.string("image_url"));
+    b.url(o.string("url"));
+    b.capturedAt(o.optInstant("captured_at"));
+    b.stale(o.bool("stale"));
+    b.source(o.string("source"));
+    b.attribution(o.string("attribution"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ExploreResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ExploreResponse exploreResponse(JsonFields o) {
+    ExploreResponse.Builder b = ExploreResponse.builder();
+    b.metricAsString(o.string("metric"));
+    b.order(o.string("order"));
+    b.unitsAsString(o.string("units"));
+    b.unit(o.string("unit"));
+    b.items(o.list("items", Decoders::exploreItem));
+    b.count(o.integer("count"));
+    b.nextCursor(o.optString("next_cursor"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ExploreItem}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ExploreItem exploreItem(JsonFields o) {
+    ExploreItem.Builder b = ExploreItem.builder();
+    b.rank(o.integer("rank"));
+    b.location(o.object("location", Decoders::locationRef));
+    b.elevationName(o.optString("elevation_name"));
+    b.elevationDisplayName(o.optString("elevation_display_name"));
+    b.elevation(o.number("elevation"));
+    b.value(o.number("value"));
+    b.p10(o.optNumber("p10"));
+    b.p90(o.optNumber("p90"));
+    b.asOf(o.instant("as_of"));
+    b.initializedAt(o.optInstant("initialized_at"));
+    b.source(o.string("source"));
+    b.distanceKm(o.optNumber("distance_km"));
+    b.path(o.string("path"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code ExploreValue}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static ExploreValue exploreValue(JsonFields o) {
+    ExploreValue.Builder b = ExploreValue.builder();
+    b.metricAsString(o.string("metric"));
+    b.value(o.number("value"));
+    b.unit(o.string("unit"));
+    b.p10(o.optNumber("p10"));
+    b.p90(o.optNumber("p90"));
+    b.asOf(o.instant("as_of"));
+    b.initializedAt(o.optInstant("initialized_at"));
+    b.source(o.string("source"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code CompositionResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static CompositionResponse compositionResponse(JsonFields o) {
+    CompositionResponse.Builder b = CompositionResponse.builder();
+    b.initializedAt(o.instant("initialized_at"));
+    b.models(o.list("models", Decoders::modelEntry));
+    b.modelCount(o.integer("model_count"));
+    b.totalMembers(o.integer("total_members"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SeasonResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SeasonResponse seasonResponse(JsonFields o) {
+    SeasonResponse.Builder b = SeasonResponse.builder();
+    b.location(o.object("location", Decoders::locationRef));
+    b.waterYear(o.integer("water_year"));
+    b.starts(o.date("starts"));
+    b.through(o.date("through"));
+    b.asOf(o.optInstant("as_of"));
+    b.unitsAsString(o.string("units"));
+    b.precipitation(o.optObject("precipitation", Decoders::seasonTotal));
+    b.snowfall(o.optObject("snowfall", Decoders::seasonTotal));
+    b.station(o.optObject("station", Decoders::seasonStation));
+    b.daily(o.list("daily", Decoders::seasonDay));
+    b.attribution(o.object("attribution", Decoders::responseAttribution));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SeasonTotal}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SeasonTotal seasonTotal(JsonFields o) {
+    SeasonTotal.Builder b = SeasonTotal.builder();
+    b.amount(o.number("total"));
+    b.unit(o.string("unit"));
+    b.source(o.string("source"));
+    b.daysCovered(o.integer("days_covered"));
+    b.daysMissing(o.integer("days_missing"));
+    b.provisionalDays(o.integer("provisional_days"));
+    b.normalToDate(o.optNumber("normal_to_date"));
+    b.percentOfNormal(o.optInteger("percent_of_normal"));
+    b.normalSource(o.optString("normal_source"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SeasonStation}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SeasonStation seasonStation(JsonFields o) {
+    SeasonStation.Builder b = SeasonStation.builder();
+    b.id(o.string("id"));
+    b.network(o.string("network"));
+    b.name(o.string("name"));
+    b.distanceKm(o.number("distance_km"));
+    b.elevationM(o.number("elevation_m"));
+    b.precipitationTotal(o.optNumber("precipitation_total"));
+    b.precipitationPercentOfMedian(o.optInteger("precipitation_percent_of_median"));
+    b.swe(o.optNumber("swe"));
+    b.swePercentOfMedian(o.optInteger("swe_percent_of_median"));
+    b.snowDepth(o.optNumber("snow_depth"));
+    b.through(o.date("through"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SeasonDay}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SeasonDay seasonDay(JsonFields o) {
+    SeasonDay.Builder b = SeasonDay.builder();
+    b.date(o.date("date"));
+    b.precipitation(o.optNumber("precipitation"));
+    b.snowfall(o.optNumber("snowfall"));
+    b.provisional(o.bool("provisional"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowTrendResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowTrendResponse snowTrendResponse(JsonFields o) {
+    SnowTrendResponse.Builder b = SnowTrendResponse.builder();
+    b.location(o.object("location", Decoders::locationRef));
+    b.unitsAsString(o.string("units"));
+    b.elevation(o.object("elevation", Decoders::snowTrendResponseElevation));
+    b.retentionDays(o.integer("retention_days"));
+    b.dates(o.dateList("dates"));
+    b.grids(o.list("grids", Decoders::snowTrendGrid));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowTrendResponseElevation}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowTrendResponseElevation snowTrendResponseElevation(JsonFields o) {
+    SnowTrendResponseElevation.Builder b = SnowTrendResponseElevation.builder();
+    b.name(o.optString("name"));
+    b.displayName(o.optString("display_name"));
+    b.height(o.number("elevation"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowTrendGrid}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowTrendGrid snowTrendGrid(JsonFields o) {
+    SnowTrendGrid.Builder b = SnowTrendGrid.builder();
+    b.source(o.string("source"));
+    b.runs(o.list("runs", Decoders::snowTrendRun));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowTrendRun}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowTrendRun snowTrendRun(JsonFields o) {
+    SnowTrendRun.Builder b = SnowTrendRun.builder();
+    b.backfilled(o.bool("backfilled"));
+    b.initializedAt(o.instant("initialized_at"));
+    b.days(o.nullableList("days", Decoders::snowTrendDay));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowTrendDay}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowTrendDay snowTrendDay(JsonFields o) {
+    SnowTrendDay.Builder b = SnowTrendDay.builder();
+    b.date(o.date("date"));
+    b.amount(o.optNumber("snow"));
+    b.partial(o.bool("partial"));
+    b.p10(o.optNumber("p10"));
+    b.p90(o.optNumber("p90"));
+    b.kind(o.optString("kind"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackResponse snowpackResponse(JsonFields o) {
+    SnowpackResponse.Builder b = SnowpackResponse.builder();
+    b.beta(o.bool("beta"));
+    b.location(o.object("location", Decoders::locationRef));
+    b.unitsAsString(o.string("units"));
+    b.modelRun(o.optObject("model_run", Decoders::snowpackRun));
+    b.stale(o.bool("stale"));
+    b.spots(o.list("spots", Decoders::snowpackSpot));
+    b.definitions(o.object("definitions", Decoders::snowpackResponseDefinitions));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackResponseDefinitions}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackResponseDefinitions snowpackResponseDefinitions(JsonFields o) {
+    SnowpackResponseDefinitions.Builder b = SnowpackResponseDefinitions.builder();
+    b.surface(o.stringMap("surface"));
+    b.layerForm(o.stringMap("layer_form"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackRun}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackRun snowpackRun(JsonFields o) {
+    SnowpackRun.Builder b = SnowpackRun.builder();
+    b.initializedAt(o.instant("initialized_at"));
+    b.generatedAt(o.instant("generated_at"));
+    b.model(o.object("model", Decoders::snowpackModel));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackModel}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackModel snowpackModel(JsonFields o) {
+    SnowpackModel.Builder b = SnowpackModel.builder();
+    b.name(o.string("name"));
+    b.by(o.string("by"));
+    b.license(o.string("license"));
+    b.version(o.optString("version"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackSpot}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackSpot snowpackSpot(JsonFields o) {
+    SnowpackSpot.Builder b = SnowpackSpot.builder();
+    b.name(o.optString("name"));
+    b.displayName(o.optString("display_name"));
+    b.elevation(o.number("elevation"));
+    b.elevationM(o.number("elevation_m"));
+    b.initializedAt(o.instant("initialized_at"));
+    b.anchor(o.optObject("anchor", Decoders::snowpackSpotAnchor));
+    b.depth(o.object("depth", Decoders::snowpackDepth));
+    b.depthChange24h(o.optNumber("depth_change_24h"));
+    b.swe(o.numberList("swe"));
+    b.steps(o.list("steps", Decoders::snowpackStep));
+    b.layers(o.list("layers", Decoders::snowpackLayer));
+    b.aspects(o.list("aspects", Decoders::snowpackAspect));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackSpotAnchor}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackSpotAnchor snowpackSpotAnchor(JsonFields o) {
+    SnowpackSpotAnchor.Builder b = SnowpackSpotAnchor.builder();
+    b.station(o.string("station"));
+    b.name(o.string("name"));
+    b.network(o.string("network"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackStep}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackStep snowpackStep(JsonFields o) {
+    SnowpackStep.Builder b = SnowpackStep.builder();
+    b.validTime(o.instant("valid_time"));
+    b.surface(o.string("surface"));
+    b.newSnow24h(o.number("new_snow_24h"));
+    b.newSnowDensityKgM3(o.optNumber("new_snow_density_kg_m3"));
+    b.settlement24h(o.optNumber("settlement_24h"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackLayer}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackLayer snowpackLayer(JsonFields o) {
+    SnowpackLayer.Builder b = SnowpackLayer.builder();
+    b.form(o.string("form"));
+    b.thickness(o.number("thickness"));
+    b.depth(o.number("depth"));
+    b.formed(o.date("formed"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackAspect}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackAspect snowpackAspect(JsonFields o) {
+    SnowpackAspect.Builder b = SnowpackAspect.builder();
+    b.aspect(o.string("aspect"));
+    b.slopeAngleDeg(o.number("slope_angle_deg"));
+    b.depth(o.object("depth", Decoders::snowpackDepth));
+    b.depthChange24h(o.optNumber("depth_change_24h"));
+    b.steps(o.list("steps", Decoders::snowpackStep));
+    b.layers(o.list("layers", Decoders::snowpackLayer));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackDepth}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackDepth snowpackDepth(JsonFields o) {
+    SnowpackDepth.Builder b = SnowpackDepth.builder();
+    b.startTime(o.instant("start_time"));
+    b.intervalHours(o.integer("interval_hours"));
+    b.basis(o.string("basis"));
+    b.p10(o.numberList("p10"));
+    b.p50(o.numberList("p50"));
+    b.p90(o.numberList("p90"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackPlumeResponse}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackPlumeResponse snowpackPlumeResponse(JsonFields o) {
+    SnowpackPlumeResponse.Builder b = SnowpackPlumeResponse.builder();
+    b.beta(o.bool("beta"));
+    b.location(o.object("location", Decoders::locationRef));
+    b.unitsAsString(o.string("units"));
+    b.modelRun(o.optObject("model_run", Decoders::snowpackRun));
+    b.stale(o.bool("stale"));
+    b.depth(o.optObject("depth", Decoders::snowpackPlumeDepth));
+    b.models(o.list("models", Decoders::snowpackPlumeModel));
+    b.memberDepths(o.numberLists("member_depths"));
+    b.spread(o.string("spread"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackPlumeDepth}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackPlumeDepth snowpackPlumeDepth(JsonFields o) {
+    SnowpackPlumeDepth.Builder b = SnowpackPlumeDepth.builder();
+    b.startTime(o.instant("start_time"));
+    b.intervalHours(o.integer("interval_hours"));
+    b.members(o.integerList("members"));
+    b.p50(o.numberList("p50"));
+    b.mean(o.numberList("mean"));
+    b.p10(o.numberList("p10"));
+    b.p25(o.numberList("p25"));
+    b.p75(o.numberList("p75"));
+    b.p90(o.numberList("p90"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code SnowpackPlumeModel}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static SnowpackPlumeModel snowpackPlumeModel(JsonFields o) {
+    SnowpackPlumeModel.Builder b = SnowpackPlumeModel.builder();
+    b.id(o.string("id"));
+    b.memberIds(o.integerList("member_ids"));
+    b.depth(o.numberLists("depth"));
+    b.depthMean(o.numberList("depth_mean"));
+    b.membersSkipped(o.integer("members_skipped"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AlertOutlineCollection}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AlertOutlineCollection alertOutlineCollection(JsonFields o) {
+    AlertOutlineCollection.Builder b = AlertOutlineCollection.builder();
+    b.type(o.string("type"));
+    b.features(o.list("features", Decoders::alertOutlineFeature));
+    b.attribution(o.object("attribution", Decoders::responseAttribution));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AlertOutlineFeature}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AlertOutlineFeature alertOutlineFeature(JsonFields o) {
+    AlertOutlineFeature.Builder b = AlertOutlineFeature.builder();
+    b.type(o.string("type"));
+    b.geometry(o.object("geometry", Decoders::alertOutlineGeometry));
+    b.properties(o.json("properties"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AlertOutlineGeometry}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AlertOutlineGeometry alertOutlineGeometry(JsonFields o) {
+    AlertOutlineGeometry.Builder b = AlertOutlineGeometry.builder();
+    b.type(o.string("type"));
+    b.coordinates(o.json("coordinates"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AvalancheZoneCollection}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AvalancheZoneCollection avalancheZoneCollection(JsonFields o) {
+    AvalancheZoneCollection.Builder b = AvalancheZoneCollection.builder();
+    b.type(o.string("type"));
+    b.features(o.list("features", Decoders::avalancheZoneFeature));
+    b.attribution(o.object("attribution", Decoders::responseAttribution));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AvalancheZoneFeature}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AvalancheZoneFeature avalancheZoneFeature(JsonFields o) {
+    AvalancheZoneFeature.Builder b = AvalancheZoneFeature.builder();
+    b.type(o.string("type"));
+    b.id(o.longInteger("id"));
+    b.geometry(o.object("geometry", Decoders::avalancheZoneGeometry));
+    b.properties(o.json("properties"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code AvalancheZoneGeometry}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static AvalancheZoneGeometry avalancheZoneGeometry(JsonFields o) {
+    AvalancheZoneGeometry.Builder b = AvalancheZoneGeometry.builder();
+    b.type(o.string("type"));
+    b.coordinates(o.json("coordinates"));
+    return b.build();
+  }
+
+  /**
+   * Decodes a {@code MeasuredPrecipitation}.
+   *
+   * @param o the object
+   * @return the model
+   */
+  public static MeasuredPrecipitation measuredPrecipitation(JsonFields o) {
+    MeasuredPrecipitation.Builder b = MeasuredPrecipitation.builder();
+    b.amount(o.number("amount"));
+    b.through(o.instant("through"));
     return b.build();
   }
 }

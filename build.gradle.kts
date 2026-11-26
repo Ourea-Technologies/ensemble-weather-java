@@ -86,7 +86,7 @@ tasks.compileJava {
   options.compilerArgs.addAll(
     listOf(
       "-Xdoclint:all/protected",
-      "-Xdoclint/package:com.oureawx.ensembleweather,com.oureawx.ensembleweather.model",
+      "-Xdoclint/package:com.oureawx.ensembleweather,com.oureawx.ensembleweather.types",
     )
   )
 }

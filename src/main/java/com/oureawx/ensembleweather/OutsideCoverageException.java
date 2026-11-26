@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
  * The point lies outside the forecast domain ({@code OUTSIDE_COVERAGE}, mapped by code whatever the
  * status).
  */
-public final class OutsideCoverageException extends EnsembleWeatherException {
+public final class OutsideCoverageException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**

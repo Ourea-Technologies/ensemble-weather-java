@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
  * INVALID_ELEVATION}, {@code ELEVATION_REQUIRED}, HTTP 400). Not retried; {@link #param()} names
  * the parameter when the error is about one.
  */
-public final class InvalidRequestException extends EnsembleWeatherException {
+public final class InvalidRequestException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**

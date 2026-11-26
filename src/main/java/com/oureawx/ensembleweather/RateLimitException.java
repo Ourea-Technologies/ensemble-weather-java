@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Retry-After} when that is 60 s or less; a longer wait is returned at once as this exception, with
  * {@link #retryAfter()} set.
  */
-public final class RateLimitException extends EnsembleWeatherException {
+public final class RateLimitException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /** The server's Retry-After, or null. */

@@ -26,8 +26,8 @@ final class TestClients {
     return dir == null ? Paths.get("spec") : Paths.get(dir);
   }
 
-  EnsembleWeatherClient.Builder builder(Map<String, String> env) {
-    return EnsembleWeatherClient.builder()
+  Client.Builder builder(Map<String, String> env) {
+    return Client.builder()
         .transport(transport)
         .sleeper(
             d -> {
@@ -41,7 +41,7 @@ final class TestClients {
         .timeout(Duration.ofSeconds(30));
   }
 
-  EnsembleWeatherClient.Builder builder() {
+  Client.Builder builder() {
     return builder(Map.of());
   }
 }

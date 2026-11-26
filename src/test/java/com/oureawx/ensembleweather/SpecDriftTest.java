@@ -9,10 +9,12 @@ import com.oureawx.ensembleweather.internal.Decoders;
 import com.oureawx.ensembleweather.internal.JsonFields;
 import com.oureawx.ensembleweather.internal.MalformedResponseException;
 import com.oureawx.ensembleweather.internal.TransportRequest;
-import com.oureawx.ensembleweather.model.JsonValue;
-import com.oureawx.ensembleweather.model.LocationType;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.AlertClass;
+import com.oureawx.ensembleweather.types.ExploreMetric;
+import com.oureawx.ensembleweather.types.JsonValue;
+import com.oureawx.ensembleweather.types.LocationType;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -89,7 +91,7 @@ class SpecDriftTest {
   private static final Set<String> OUT_OF_SCOPE = Set.of("getMapsToken");
 
   /** How the SDK calls each operation, with every option it has set. */
-  private static final Map<String, Consumer<EnsembleWeatherClient>> CALLS = new TreeMap<>();
+  private static final Map<String, Consumer<Client>> CALLS = new TreeMap<>();
 
   static {
     ForecastOptions all =
@@ -159,7 +161,61 @@ class SpecDriftTest {
                     .county("Hood River")
                     .type(LocationType.SKI_AREA)
                     .limit(5)
+                    .sort(ExploreMetric.SNOW_5D)
+                    .order(SortOrder.ASC)
+                    .near(45.3, -121.7)
+                    .radiusKm(20)
+                    .units(UnitSystem.IMPERIAL)
                     .build()));
+    CALLS.put(
+        "explore",
+        c ->
+            c.explore(
+                ExploreMetric.SNOW_5D,
+                ExploreOptions.builder()
+                    .order(SortOrder.ASC)
+                    .type(LocationType.SKI_AREA)
+                    .state("OR")
+                    .near(45.3, -121.7)
+                    .radiusKm(20)
+                    .elevationMin(1000)
+                    .elevationMax(2000)
+                    .allPoints(true)
+                    .limit(5)
+                    .cursor("c")
+                    .units(UnitSystem.IMPERIAL)
+                    .build()));
+    CALLS.put("getComposition", Client::getComposition);
+    CALLS.put(
+        "getLocationSeason",
+        c ->
+            c.getSeason(
+                x,
+                SeasonOptions.builder()
+                    .waterYear(2027)
+                    .daily(true)
+                    .units(UnitSystem.IMPERIAL)
+                    .build()));
+    CALLS.put(
+        "getLocationSnowTrend",
+        c ->
+            c.getSnowTrend(
+                x,
+                SnowTrendOptions.builder()
+                    .elevation("main_lodge")
+                    .units(UnitSystem.IMPERIAL)
+                    .build()));
+    CALLS.put("getLocationSnowpack", c -> c.getSnowpack(x, UnitSystem.IMPERIAL));
+    CALLS.put("getLocationSnowpackPlume", c -> c.getSnowpackPlume(x, UnitSystem.IMPERIAL));
+    CALLS.put(
+        "getAlertOutlines",
+        c ->
+            c.getAlertOutlines(
+                AlertOutlineOptions.builder()
+                    .classes(AlertClass.WIND, AlertClass.WINTER)
+                    .bbox(-125, 41, -116, 49)
+                    .build()));
+    CALLS.put("getAvalancheZones", Client::getAvalancheZones);
     CALLS.put("getAllLocations", c -> c.listLocations(list));
     CALLS.put("getLocations", c -> c.listLocations("or", list));
     CALLS.put(
@@ -190,7 +246,7 @@ class SpecDriftTest {
                     .build()));
     CALLS.put("getCatalogStation", c -> c.getCatalogStation("x", detail));
     CALLS.put("getAvailableRuns", c -> c.getRuns(5, "c"));
-    CALLS.put("getAttribution", EnsembleWeatherClient::getAttribution);
+    CALLS.put("getAttribution", Client::getAttribution);
   }
 
   @Test
@@ -217,7 +273,7 @@ class SpecDriftTest {
   @TestFactory
   Stream<DynamicTest> eachOperationSendsOnlyItsParameters() {
     List<DynamicTest> tests = new ArrayList<>();
-    for (Map.Entry<String, Consumer<EnsembleWeatherClient>> e : CALLS.entrySet()) {
+    for (Map.Entry<String, Consumer<Client>> e : CALLS.entrySet()) {
       tests.add(
           DynamicTest.dynamicTest(
               e.getKey(),
@@ -251,15 +307,92 @@ class SpecDriftTest {
   // ------------------------------------------------------------------ schemas
 
   private static final Map<String, String> INLINE =
-      Map.of(
-          "LocationSummary.elevations", "LocationElevation",
-          "CurrentConditions.station", "CurrentStation",
-          "TimeSeriesPoint.members", "ModelMembers",
-          "RunsResponse.served", "ServedRun",
-          "RunsResponse.runs", "RunInfo");
+      Map.ofEntries(
+          Map.entry("CurrentConditions.station", "CurrentStation"),
+          Map.entry("TimeSeriesPoint.members", "ModelMembers"),
+          Map.entry("RunsResponse.served", "ServedRun"),
+          Map.entry("RunsResponse.runs", "RunInfo"),
+          Map.entry("DailyForecast.measured_precipitation", "MeasuredPrecipitation"),
+          Map.entry("SnowTrendResponse.elevation", "SnowTrendResponseElevation"),
+          Map.entry("SnowTrendGrid.runs", "SnowTrendRun"),
+          Map.entry("SnowpackResponse.definitions", "SnowpackResponseDefinitions"),
+          Map.entry("SnowpackRun.model", "SnowpackModel"),
+          Map.entry("SnowpackSpot.anchor", "SnowpackSpotAnchor"),
+          Map.entry("SnowpackPlumeResponse.depth", "SnowpackPlumeDepth"),
+          Map.entry("SnowpackPlumeResponse.models", "SnowpackPlumeModel"));
 
+  /**
+   * Schemas with no model class of their own: enums and arrays the models hold as Java types, and
+   * {@code AlertOutlineProperties}, which a feature passes through as raw JSON (BEHAVIOR.md 3.0:
+   * GeoJSON keeps its wire keys).
+   */
   private static final Set<String> NOT_MODELS =
-      Set.of("ErrorResponse", "UnitSystem", "FreezingLevel", "ModelMeans", "NextCursor");
+      Set.of(
+          "ErrorResponse",
+          "UnitSystem",
+          "FreezingLevel",
+          "ModelMeans",
+          "NextCursor",
+          "MemberColumn",
+          "NullableNumbers",
+          "AlertOutlineProperties");
+
+  /** Java's names for wire words it reserves (BEHAVIOR.md 3.0: the language's idiom wins). */
+  private static final Map<String, String> RESERVED =
+      Map.of(
+          "default",
+          "isDefault",
+          "is_default",
+          "isDefault",
+          "short",
+          "shortText",
+          "long",
+          "longText");
+
+  /**
+   * The BEHAVIOR.md 3.0 rename table, read from the pinned spec: where the field sits (a schema, or
+   * {@code Schema.field} for an inline object) to its wire names and their SDK names.
+   */
+  static final Map<String, Map<String, String>> RENAMES = renames();
+
+  private static Map<String, Map<String, String>> renames() {
+    String behaviour;
+    try {
+      behaviour = Files.readString(TestClients.specDir().resolve("BEHAVIOR.md"));
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+    String table =
+        behaviour
+            .split("\\| Schema \\(where the field sits\\) \\| Wire name \\| SDK name \\|", -1)[1];
+    Map<String, Map<String, String>> out = new TreeMap<>();
+    String[] lines = table.split("\n", -1);
+    for (int i = 2; i < lines.length && lines[i].startsWith("|"); i++) {
+      String[] cells = lines[i].split("\\|", -1);
+      List<String> wires = names(cells[2]);
+      List<String> sdks = names(cells[3].split("\\(", -1)[0]);
+      assertEquals(wires.size(), sdks.size(), lines[i]);
+      for (String holder : names(cells[1].split("\\(", -1)[0])) {
+        String key = holder.replace("[]", "");
+        for (int j = 0; j < wires.size(); j++) {
+          out.computeIfAbsent(key, k -> new TreeMap<>()).put(wires.get(j), sdks.get(j));
+        }
+      }
+    }
+    assertTrue(out.size() > 25, "the rename table: " + out.keySet());
+    return out;
+  }
+
+  private static List<String> names(String cell) {
+    List<String> out = new ArrayList<>();
+    for (String s : cell.split(",", -1)) {
+      String n = s.trim().replace("`", "");
+      if (!n.isEmpty()) {
+        out.add(n);
+      }
+    }
+    return out;
+  }
 
   private static String className(String schema) {
     if (schema.startsWith("FreezingLevel")) {
@@ -275,8 +408,8 @@ class SpecDriftTest {
   }
 
   static String camel(String snake) {
-    if (snake.equals("default") || snake.equals("is_default")) {
-      return "isDefault";
+    if (RESERVED.containsKey(snake)) {
+      return RESERVED.get(snake);
     }
     StringBuilder out = new StringBuilder();
     boolean up = false;
@@ -305,20 +438,34 @@ class SpecDriftTest {
     return props;
   }
 
-  private static void checkProperties(String className, Map<String, Object> props) {
+  private static void checkProperties(String className, String holder, Map<String, Object> props) {
     Class<?> type;
     try {
-      type = Class.forName("com.oureawx.ensembleweather.model." + className);
+      type = Class.forName("com.oureawx.ensembleweather.types." + className);
     } catch (ClassNotFoundException e) {
       fail("no model class " + className);
       return;
     }
+    Map<String, String> renamed = RENAMES.getOrDefault(holder, Map.of());
     for (String prop : props.keySet()) {
-      String getter = camel(prop);
+      String sdk = renamed.get(prop);
+      String getter = camel(sdk == null ? prop : sdk);
       try {
         type.getMethod(getter);
       } catch (NoSuchMethodException e) {
         fail(className + " has no " + getter + "() for the spec's " + prop);
+      }
+      if (sdk != null && !camel(prop).equals(getter)) {
+        String wireGetter = camel(prop);
+        boolean alias = true;
+        try {
+          type.getMethod(wireGetter);
+        } catch (NoSuchMethodException e) {
+          alias = false;
+        }
+        assertTrue(
+            !alias,
+            className + "." + wireGetter + "() is the wire name of renamed " + getter + "()");
       }
     }
   }
@@ -336,7 +483,7 @@ class SpecDriftTest {
               schema,
               () -> {
                 Map<String, Object> props = properties(map(e.getValue()));
-                checkProperties(className(schema), props);
+                checkProperties(className(schema), schema, props);
                 for (Map.Entry<String, Object> p : props.entrySet()) {
                   String inline = INLINE.get(schema + "." + p.getKey());
                   if (inline != null) {
@@ -347,7 +494,7 @@ class SpecDriftTest {
                     if (s.containsKey("anyOf")) {
                       s = map(list(s.get("anyOf")).get(0));
                     }
-                    checkProperties(inline, properties(s));
+                    checkProperties(inline, schema + "." + p.getKey(), properties(s));
                   }
                 }
               }));
@@ -357,6 +504,7 @@ class SpecDriftTest {
             "ModelMeans items",
             () ->
                 checkProperties(
+                    "ModelStats",
                     "ModelStats",
                     properties(map(SPEC, "components", "schemas", "ModelMeans", "items")))));
     return tests.stream();
@@ -384,6 +532,14 @@ class SpecDriftTest {
     DECODERS.put("getCatalogStation", Decoders::catalogStationDetail);
     DECODERS.put("getAvailableRuns", Decoders::runsResponse);
     DECODERS.put("getAttribution", Decoders::attributionRegistry);
+    DECODERS.put("explore", Decoders::exploreResponse);
+    DECODERS.put("getComposition", Decoders::compositionResponse);
+    DECODERS.put("getLocationSeason", Decoders::seasonResponse);
+    DECODERS.put("getLocationSnowTrend", Decoders::snowTrendResponse);
+    DECODERS.put("getLocationSnowpack", Decoders::snowpackResponse);
+    DECODERS.put("getLocationSnowpackPlume", Decoders::snowpackPlumeResponse);
+    DECODERS.put("getAlertOutlines", Decoders::alertOutlineCollection);
+    DECODERS.put("getAvalancheZones", Decoders::avalancheZoneCollection);
   }
 
   /**
@@ -433,6 +589,9 @@ class SpecDriftTest {
           response = map(SPEC, "components", "responses", refName(response.get("$ref")));
         }
         Map<String, Object> content = map(response, "content", "application/json");
+        if (content.isEmpty()) {
+          content = map(response, "content", "application/geo+json");
+        }
         Map<String, Object> examples = new LinkedHashMap<>();
         if (content.containsKey("example")) {
           examples.put("example", content.get("example"));

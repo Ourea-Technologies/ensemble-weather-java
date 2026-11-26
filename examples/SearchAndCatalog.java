@@ -1,14 +1,14 @@
 // Search for a location, then page through the catalog with its cursor.
 import com.oureawx.ensembleweather.CatalogLocationQuery;
-import com.oureawx.ensembleweather.EnsembleWeatherClient;
+import com.oureawx.ensembleweather.Client;
 import com.oureawx.ensembleweather.SearchOptions;
-import com.oureawx.ensembleweather.model.CatalogLocationPage;
-import com.oureawx.ensembleweather.model.SearchHit;
-import com.oureawx.ensembleweather.model.SearchLocationsResponse;
+import com.oureawx.ensembleweather.types.CatalogLocationPage;
+import com.oureawx.ensembleweather.types.SearchHit;
+import com.oureawx.ensembleweather.types.SearchLocationsResponse;
 
 public class SearchAndCatalog {
   public static void main(String[] args) {
-    EnsembleWeatherClient client = EnsembleWeatherClient.builder().build();
+    Client client = Client.builder().build();
 
     SearchLocationsResponse hits =
         client.searchLocations("hood meadows", SearchOptions.builder().limit(5).build());

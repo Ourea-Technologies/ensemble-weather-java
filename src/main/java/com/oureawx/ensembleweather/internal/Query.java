@@ -4,17 +4,19 @@ package com.oureawx.ensembleweather.internal;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Builds the canonical query string (BEHAVIOR.md section 3.1): no parameter at its default, each
  * parameter once under its own name, alphabetical order, RFC 3986 percent-encoding (space as {@code
  * %20}, uppercase hex), except the literal {@code :} and {@code ,} of {@code prob} and {@code
- * totals}.
+ * totals} and the literal commas of a comma list, {@code near} and {@code bbox}.
  */
 public final class Query {
   private final Map<String, List<String>> params = new TreeMap<>();
@@ -94,14 +96,38 @@ public final class Query {
   }
 
   /**
-   * A comma-joined list, percent-encoded as one value; omitted when empty.
+   * A comma list (BEHAVIOR.md 3.1 rule 5): sorted, de-duplicated, each item percent-encoded and the
+   * commas between items sent literally; omitted when empty.
    *
    * @param name the parameter
-   * @param values the values
+   * @param values the values, in any order
    * @return this query
    */
-  public Query csv(String name, List<String> values) {
-    return values.isEmpty() ? this : string(name, String.join(",", values));
+  public Query csv(String name, Collection<String> values) {
+    if (values.isEmpty()) {
+      return this;
+    }
+    List<String> encoded = new ArrayList<>();
+    for (String v : new TreeSet<>(values)) {
+      encoded.add(encode(v));
+    }
+    return put(name, String.join(",", encoded));
+  }
+
+  /**
+   * Numbers joined with literal commas ({@code near=lat,lon}, {@code bbox=w,s,e,n}), each the
+   * shortest decimal that round-trips.
+   *
+   * @param name the parameter
+   * @param values the numbers, in order
+   * @return this query
+   */
+  public Query numbers(String name, double... values) {
+    List<String> parts = new ArrayList<>();
+    for (double v : values) {
+      parts.add(plain(v));
+    }
+    return put(name, String.join(",", parts));
   }
 
   /**
@@ -120,25 +146,6 @@ public final class Query {
       }
     }
     return put(name, value);
-  }
-
-  /**
-   * A repeated parameter ({@code capability=a&capability=b}); omitted when empty.
-   *
-   * @param name the parameter
-   * @param values the values, sent in this order
-   * @return this query
-   */
-  public Query repeated(String name, List<String> values) {
-    if (values.isEmpty()) {
-      return this;
-    }
-    List<String> encoded = new ArrayList<>();
-    for (String v : values) {
-      encoded.add(encode(v));
-    }
-    params.put(name, List.copyOf(encoded));
-    return this;
   }
 
   /**

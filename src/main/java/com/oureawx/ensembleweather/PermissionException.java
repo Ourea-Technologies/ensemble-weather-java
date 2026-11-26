@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package com.oureawx.ensembleweather;
 
-import com.oureawx.ensembleweather.model.NearestLocation;
+import com.oureawx.ensembleweather.types.NearestLocation;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * at coordinates without a Pro key. From a coordinate route it may name the {@link
  * #nearestLocation()} whose forecast answers without a key.
  */
-public final class PermissionException extends EnsembleWeatherException {
+public final class PermissionException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /** The body's nearest named location, or null (not serialized). */
@@ -55,7 +55,7 @@ public final class PermissionException extends EnsembleWeatherException {
   /**
    * On {@code PRO_REQUIRED} from a coordinate route, the nearest named location whose forecast
    * answers without a key (within 10 km and 300 m of elevation); call its {@code url}, or {@link
-   * EnsembleWeatherClient#getForecast(String)} with its state and slug.
+   * Client#getForecast(String)} with its state and slug.
    *
    * @return the location, or empty when none qualifies or the error is not from a coordinate route
    */

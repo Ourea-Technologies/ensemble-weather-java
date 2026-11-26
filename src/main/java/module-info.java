@@ -9,5 +9,5 @@ module com.oureawx.ensembleweather {
   requires static transitive org.jspecify;
 
   exports com.oureawx.ensembleweather;
-  exports com.oureawx.ensembleweather.model;
+  exports com.oureawx.ensembleweather.types;
 }

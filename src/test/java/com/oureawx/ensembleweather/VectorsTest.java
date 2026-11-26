@@ -11,11 +11,14 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.oureawx.ensembleweather.internal.Json;
 import com.oureawx.ensembleweather.internal.TransportRequest;
-import com.oureawx.ensembleweather.model.Aggregation;
-import com.oureawx.ensembleweather.model.JsonValue;
-import com.oureawx.ensembleweather.model.Operator;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.Aggregation;
+import com.oureawx.ensembleweather.types.AlertClass;
+import com.oureawx.ensembleweather.types.ExploreMetric;
+import com.oureawx.ensembleweather.types.JsonValue;
+import com.oureawx.ensembleweather.types.LocationType;
+import com.oureawx.ensembleweather.types.Operator;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -27,6 +30,8 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,8 +72,8 @@ class VectorsTest {
   }
 
   @Test
-  void findsAll43Vectors() throws IOException {
-    assertEquals(43, vectorFiles().size());
+  void findsAll58Vectors() throws IOException {
+    assertEquals(58, vectorFiles().size());
   }
 
   @TestFactory
@@ -120,7 +125,7 @@ class VectorsTest {
       }
       t.transport.respond(integer(r.get("status").orElseThrow()), headers, body);
     }
-    EnsembleWeatherClient.Builder b = t.builder(env);
+    Client.Builder b = t.builder(env);
     opt(clientConfig, "api_key").flatMap(JsonValue::asString).ifPresent(b::apiKey);
     opt(clientConfig, "base_url").flatMap(JsonValue::asString).ifPresent(b::baseUrl);
     opt(clientConfig, "max_retries").ifPresent(v -> b.maxRetries(integer(v)));
@@ -135,7 +140,7 @@ class VectorsTest {
     opt(clientConfig, "send_key_on_open_routes")
         .flatMap(JsonValue::asBoolean)
         .ifPresent(b::sendKeyOnOpenRoutes);
-    EnsembleWeatherClient client = b.build();
+    Client client = b.build();
 
     List<JsonValue> calls = new ArrayList<>();
     opt(vector, "call").ifPresent(calls::add);
@@ -143,14 +148,14 @@ class VectorsTest {
     List<Object> results = new ArrayList<>();
     Throwable error = null;
     for (JsonValue call : calls) {
-      EnsembleWeatherClient target =
+      Client target =
           opt(call, "with_api_key")
               .flatMap(JsonValue::asString)
               .map(client::withApiKey)
               .orElse(client);
       try {
         results.add(invoke(target, call));
-      } catch (EnsembleWeatherException e) {
+      } catch (OureaException e) {
         error = e;
         break;
       }
@@ -160,7 +165,7 @@ class VectorsTest {
     Optional<JsonValue> wantError = opt(expect, "error");
     if (wantError.isPresent()) {
       assertNotNull(error, "an error was expected");
-      checkError((EnsembleWeatherException) error, wantError.get());
+      checkError((OureaException) error, wantError.get());
     } else if (error != null) {
       throw new AssertionError("no error was expected", error);
     }
@@ -223,18 +228,38 @@ class VectorsTest {
 
   // ------------------------------------------------------------------ the argument mapping
 
-  private static Object invoke(EnsembleWeatherClient client, JsonValue call) {
+  private static LocationId location(JsonValue args) {
+    return opt(args, "location").isPresent()
+        ? LocationId.parse(str(args, "location"))
+        : LocationId.of(str(args, "state"), str(args, "slug"));
+  }
+
+  private static String[] strings(JsonValue v) {
+    List<String> out = new ArrayList<>();
+    for (JsonValue s : v.asArray()) {
+      out.add(s.asString().orElseThrow());
+    }
+    return out.toArray(new String[0]);
+  }
+
+  private static UnitSystem units(JsonValue v) {
+    return UnitSystem.fromWireValue(v.asString().orElseThrow());
+  }
+
+  private static void onlyArgs(JsonValue args, String... allowed) {
+    for (String k : args.asObject().keySet()) {
+      if (!List.of(allowed).contains(k)) {
+        throw new AssertionError("the vectors runner has no mapping for argument " + k);
+      }
+    }
+  }
+
+  private static Object invoke(Client client, JsonValue call) {
     String operation = str(call, "operation");
     JsonValue args = call.get("args").orElseThrow();
     switch (operation) {
       case "getLocationForecast":
-        {
-          LocationId where =
-              opt(args, "location").isPresent()
-                  ? LocationId.parse(str(args, "location"))
-                  : LocationId.of(str(args, "state"), str(args, "slug"));
-          return client.getForecast(where, forecastOptions(args));
-        }
+        return client.getForecast(location(args), forecastOptions(args));
       case "getPointForecast":
         {
           double lat = number(args.get("lat").orElseThrow());
@@ -245,10 +270,50 @@ class VectorsTest {
                   : Coordinates.of(lat, lon);
           return client.getPointForecast(at, forecastOptions(args));
         }
+      case "getCurrentConditions":
+        onlyArgs(args, "location", "state", "slug");
+        return client.getCurrent(location(args));
+      case "getLocationAlerts":
+        onlyArgs(args, "location", "state", "slug");
+        return client.getAlerts(location(args));
+      case "getLocations":
+        {
+          onlyArgs(args, "state", "limit");
+          LocationListOptions.Builder o = LocationListOptions.builder();
+          opt(args, "limit").ifPresent(v -> o.limit(integer(v)));
+          return client.listLocations(str(args, "state"), o.build());
+        }
+      case "getNearbyLocations":
+        onlyArgs(args, "location", "state", "slug");
+        return client.getNearby(location(args));
+      case "getNearbyByCoordinates":
+        onlyArgs(args, "lat", "lon");
+        return client.getPointNearby(
+            Coordinates.of(
+                number(args.get("lat").orElseThrow()), number(args.get("lon").orElseThrow())));
+      case "getAvailableRuns":
+        onlyArgs(args, "limit");
+        return client.getRuns(integer(args.get("limit").orElseThrow()));
       case "searchLocations":
-        return client.searchLocations(str(args, "q"));
+        return client.searchLocations(str(args, "q"), searchOptions(args));
       case "getCatalogLocation":
-        return client.getCatalogLocation(str(args, "slug"));
+        {
+          onlyArgs(args, "slug", "include");
+          CatalogDetailOptions.Builder o = CatalogDetailOptions.builder();
+          opt(args, "include")
+              .ifPresent(
+                  v -> {
+                    List<CatalogInclude> inc = new ArrayList<>();
+                    for (String s : strings(v)) {
+                      inc.add(CatalogInclude.valueOf(s.toUpperCase(Locale.ROOT)));
+                    }
+                    o.include(inc.toArray(new CatalogInclude[0]));
+                  });
+          return client.getCatalogLocation(str(args, "slug"), o.build());
+        }
+      case "getCatalogStation":
+        onlyArgs(args, "slug");
+        return client.getCatalogStation(str(args, "slug"));
       case "getAttribution":
         return client.getAttribution();
       case "listCatalogLocations":
@@ -260,9 +325,152 @@ class VectorsTest {
           return slugs;
         }
         return client.listCatalogLocations(CatalogLocationQuery.all());
+      case "explore":
+        return client.explore(
+            ExploreMetric.fromWireValue(str(args, "metric")), exploreOptions(args));
+      case "getComposition":
+        onlyArgs(args);
+        return client.getComposition();
+      case "getLocationSeason":
+        {
+          onlyArgs(args, "location", "state", "slug", "water_year", "include", "units");
+          SeasonOptions.Builder o = SeasonOptions.builder();
+          opt(args, "water_year").ifPresent(v -> o.waterYear(integer(v)));
+          opt(args, "include").ifPresent(v -> o.daily(List.of(strings(v)).contains("daily")));
+          opt(args, "units").ifPresent(v -> o.units(units(v)));
+          return client.getSeason(location(args), o.build());
+        }
+      case "getLocationSnowTrend":
+        {
+          onlyArgs(args, "location", "state", "slug", "elevation", "units");
+          SnowTrendOptions.Builder o = SnowTrendOptions.builder();
+          opt(args, "elevation").ifPresent(v -> o.elevation(v.asString().orElseThrow()));
+          opt(args, "units").ifPresent(v -> o.units(units(v)));
+          return client.getSnowTrend(location(args), o.build());
+        }
+      case "getLocationSnowpack":
+        onlyArgs(args, "location", "state", "slug", "units");
+        return opt(args, "units").isPresent()
+            ? client.getSnowpack(location(args), units(args.get("units").orElseThrow()))
+            : client.getSnowpack(location(args));
+      case "getLocationSnowpackPlume":
+        onlyArgs(args, "location", "state", "slug", "units");
+        return opt(args, "units").isPresent()
+            ? client.getSnowpackPlume(location(args), units(args.get("units").orElseThrow()))
+            : client.getSnowpackPlume(location(args));
+      case "getAlertOutlines":
+        {
+          onlyArgs(args, "classes", "bbox");
+          AlertOutlineOptions.Builder o = AlertOutlineOptions.builder();
+          opt(args, "classes")
+              .ifPresent(
+                  v -> {
+                    List<AlertClass> cs = new ArrayList<>();
+                    for (String s : strings(v)) {
+                      cs.add(AlertClass.fromWireValue(s));
+                    }
+                    o.classes(cs.toArray(new AlertClass[0]));
+                  });
+          opt(args, "bbox")
+              .ifPresent(
+                  b ->
+                      o.bbox(
+                          number(b.get("west").orElseThrow()),
+                          number(b.get("south").orElseThrow()),
+                          number(b.get("east").orElseThrow()),
+                          number(b.get("north").orElseThrow())));
+          return client.getAlertOutlines(o.build());
+        }
+      case "getAvalancheZones":
+        onlyArgs(args);
+        return client.getAvalancheZones();
       default:
         throw new AssertionError("the vectors runner has no mapping for " + operation);
     }
+  }
+
+  private static SearchOptions searchOptions(JsonValue args) {
+    SearchOptions.Builder o = SearchOptions.builder();
+    for (Map.Entry<String, JsonValue> e : args.asObject().entrySet()) {
+      JsonValue v = e.getValue();
+      switch (e.getKey()) {
+        case "q":
+          break;
+        case "sort":
+          if (!"relevance".equals(v.asString().orElseThrow())) {
+            o.sort(ExploreMetric.fromWireValue(v.asString().orElseThrow()));
+          }
+          break;
+        case "order":
+          o.order(SortOrder.valueOf(v.asString().orElseThrow().toUpperCase(Locale.ROOT)));
+          break;
+        case "near":
+          o.near(number(v.get("lat").orElseThrow()), number(v.get("lon").orElseThrow()));
+          break;
+        case "radius_km":
+          o.radiusKm(number(v));
+          break;
+        case "units":
+          o.units(units(v));
+          break;
+        case "state":
+          o.state(v.asString().orElseThrow());
+          break;
+        case "limit":
+          o.limit(integer(v));
+          break;
+        default:
+          throw new AssertionError("the vectors runner has no mapping for argument " + e.getKey());
+      }
+    }
+    return o.build();
+  }
+
+  private static ExploreOptions exploreOptions(JsonValue args) {
+    ExploreOptions.Builder o = ExploreOptions.builder();
+    for (Map.Entry<String, JsonValue> e : args.asObject().entrySet()) {
+      JsonValue v = e.getValue();
+      switch (e.getKey()) {
+        case "metric":
+          break;
+        case "order":
+          o.order(SortOrder.valueOf(v.asString().orElseThrow().toUpperCase(Locale.ROOT)));
+          break;
+        case "type":
+          o.type(LocationType.fromWireValue(v.asString().orElseThrow()));
+          break;
+        case "state":
+          o.state(v.asString().orElseThrow());
+          break;
+        case "near":
+          o.near(number(v.get("lat").orElseThrow()), number(v.get("lon").orElseThrow()));
+          break;
+        case "radius_km":
+          o.radiusKm(number(v));
+          break;
+        case "elevation_min":
+          o.elevationMin(number(v));
+          break;
+        case "elevation_max":
+          o.elevationMax(number(v));
+          break;
+        case "points":
+          o.allPoints("all".equals(v.asString().orElseThrow()));
+          break;
+        case "limit":
+          o.limit(integer(v));
+          break;
+        case "cursor":
+          o.cursor(v.asString().orElseThrow());
+          break;
+        case "units":
+          o.units(units(v));
+          break;
+        default:
+          throw new AssertionError("the vectors runner has no mapping for argument " + e.getKey());
+      }
+    }
+    return o.build();
   }
 
   private static ForecastOptions forecastOptions(JsonValue args) {
@@ -284,8 +492,34 @@ class VectorsTest {
           o.maxHours(integer(v));
           break;
         case "members":
-          o.members(v.asBoolean().orElseThrow());
+          if (v.kind() == JsonValue.Kind.STRING) {
+            o.members(v.asString().orElseThrow());
+          } else {
+            o.members(v.asBoolean().orElseThrow());
+          }
           break;
+        case "elevations":
+          if (v.kind() == JsonValue.Kind.STRING && "all".equals(v.asString().orElseThrow())) {
+            o.allElevations();
+          } else {
+            o.elevations(strings(v));
+          }
+          break;
+        case "sources":
+          o.sources(strings(v));
+          break;
+        case "exclude_sources":
+          o.excludeSources(strings(v));
+          break;
+        case "include":
+          {
+            List<ForecastInclude> inc = new ArrayList<>();
+            for (String s : strings(v)) {
+              inc.add(ForecastInclude.valueOf(s.toUpperCase(Locale.ROOT)));
+            }
+            o.include(inc.toArray(new ForecastInclude[0]));
+            break;
+          }
         case "models":
           o.models(v.asBoolean().orElseThrow());
           break;
@@ -374,7 +608,7 @@ class VectorsTest {
 
   // ------------------------------------------------------------------ checks
 
-  private static void checkError(EnsembleWeatherException e, JsonValue want) {
+  private static void checkError(OureaException e, JsonValue want) {
     opt(want, "category")
         .ifPresent(
             c ->
@@ -498,9 +732,13 @@ class VectorsTest {
   private static final Pattern SEGMENT = Pattern.compile("([a-z0-9_]+)((?:\\[\\d+\\])*)");
   private static final Pattern INDEX = Pattern.compile("\\[(\\d+)\\]");
 
+  /** Java's names for wire words it reserves (BEHAVIOR.md 3.0: the language's idiom wins). */
+  private static final Map<String, String> RESERVED =
+      Map.of("default", "isDefault", "short", "shortText", "long", "longText");
+
   private static String camel(String snake) {
-    if (snake.equals("default")) {
-      return "isDefault";
+    if (RESERVED.containsKey(snake)) {
+      return RESERVED.get(snake);
     }
     StringBuilder out = new StringBuilder();
     boolean up = false;
@@ -547,18 +785,23 @@ class VectorsTest {
     }
   }
 
+  /** One step into a GeoJSON body, which is passed through untouched: wire keys, raw JSON. */
+  private static @org.jspecify.annotations.Nullable Object member(JsonValue json, String key) {
+    return json.get(key).filter(v -> !v.isNull()).orElse(null);
+  }
+
   /** Reads a vector path ({@code probabilities[0].window_start_hours}) over the model. */
   private static Object path(Object result, String path, boolean raw) {
     Object current = result;
     String[] segments = path.split("\\.", -1);
     int from = 0;
     if (segments[0].equals("revalidated")) {
-      return ((com.oureawx.ensembleweather.model.ResponseMetadata) call(current, "metadata"))
+      return ((com.oureawx.ensembleweather.types.ResponseMetadata) call(current, "metadata"))
           .revalidated();
     }
     if (segments[0].equals("rate_limit")) {
       current =
-          ((com.oureawx.ensembleweather.model.ResponseMetadata) call(current, "metadata"))
+          ((com.oureawx.ensembleweather.types.ResponseMetadata) call(current, "metadata"))
               .rateLimit()
               .orElse(null);
       from = 1;
@@ -569,15 +812,43 @@ class VectorsTest {
         throw new AssertionError("bad path " + path);
       }
       boolean last = i == segments.length - 1 && m.group(2).isEmpty();
-      current = call(current, camel(m.group(1)) + (raw && last ? "AsString" : ""));
+      if (current instanceof JsonValue) {
+        current = member((JsonValue) current, m.group(1));
+      } else {
+        current = call(current, camel(m.group(1)) + (raw && last ? "AsString" : ""));
+      }
       Matcher idx = INDEX.matcher(m.group(2));
       while (idx.find() && current != null) {
-        List<?> list = (List<?>) current;
         int n = Integer.parseInt(idx.group(1));
-        current = n < list.size() ? list.get(n) : null;
+        List<?> list =
+            current instanceof JsonValue ? ((JsonValue) current).asArray() : (List<?>) current;
+        current = n < list.size() ? unwrap(list.get(n)) : null;
+        if (current instanceof JsonValue && ((JsonValue) current).isNull()) {
+          current = null;
+        }
       }
     }
-    return current;
+    return plain(current);
+  }
+
+  /** A raw JSON leaf as the Java value a model would hold. */
+  private static Object plain(Object v) {
+    if (!(v instanceof JsonValue)) {
+      return v;
+    }
+    JsonValue j = (JsonValue) v;
+    switch (j.kind()) {
+      case NULL:
+        return null;
+      case STRING:
+        return j.asString().orElseThrow();
+      case NUMBER:
+        return j.asNumber().orElseThrow();
+      case BOOLEAN:
+        return j.asBoolean().orElseThrow();
+      default:
+        return j;
+    }
   }
 
   private static void checkResult(Object result, JsonValue want) {
@@ -605,7 +876,13 @@ class VectorsTest {
         if (got instanceof Enum) {
           got = path(result, p, true);
         }
-        assertEquals(v.asString().orElseThrow(), String.valueOf(got), p);
+        if (got instanceof Instant) {
+          // A timestamp expected as a string matches as an instant.
+          assertEquals(
+              OffsetDateTime.parse(v.asString().orElseThrow()).toInstant(), got, p + " (instant)");
+        } else {
+          assertEquals(v.asString().orElseThrow(), String.valueOf(got), p);
+        }
       } else {
         fail("unsupported expectation at " + p + ": " + v);
       }

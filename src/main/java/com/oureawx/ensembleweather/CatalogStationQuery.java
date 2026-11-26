@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Filters and paging for the catalog station list ({@link
- * EnsembleWeatherClient#listCatalogStations(CatalogStationQuery)}).
+ * Client#listCatalogStations(CatalogStationQuery)}).
  */
 public final class CatalogStationQuery {
   private static final CatalogStationQuery DEFAULTS = builder().build();
@@ -59,7 +59,7 @@ public final class CatalogStationQuery {
     q.string("admin1", admin1)
         .string("country", country)
         .csv("network", networks)
-        .repeated("capability", capabilities)
+        .csv("capability", capabilities)
         .string("status", status)
         .integer("limit", limit == null ? null : limit.longValue(), 20L)
         .string("cursor", cursorOverride);
@@ -111,7 +111,7 @@ public final class CatalogStationQuery {
     }
 
     /**
-     * Only stations with every one of these capabilities ({@code capability}, repeated). Sent
+     * Only stations with every one of these capabilities ({@code capability}, one comma list). Sent
      * sorted and de-duplicated, so equal queries share one URL.
      *
      * @param capabilities the capabilities, such as {@code swe}

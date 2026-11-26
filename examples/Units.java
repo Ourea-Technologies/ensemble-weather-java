@@ -1,17 +1,17 @@
 // The same forecast in metric and imperial: the server converts, the SDK
 // never does. Each response says which unit system its values are in.
-import com.oureawx.ensembleweather.EnsembleWeatherClient;
+import com.oureawx.ensembleweather.Client;
 import com.oureawx.ensembleweather.ForecastOptions;
-import com.oureawx.ensembleweather.model.ForecastResponse;
-import com.oureawx.ensembleweather.model.UnitSystem;
+import com.oureawx.ensembleweather.types.ForecastResponse;
+import com.oureawx.ensembleweather.types.UnitSystem;
 
 public class Units {
   public static void main(String[] args) {
-    EnsembleWeatherClient client = EnsembleWeatherClient.builder().build();
+    Client client = Client.builder().build();
     for (UnitSystem units : new UnitSystem[] {UnitSystem.METRIC, UnitSystem.IMPERIAL}) {
       ForecastResponse forecast =
           client.getForecast("or/mt-hood-meadows", ForecastOptions.builder().units(units).build());
-      forecast.forecast().timeseries().stream()
+      forecast.series().timeseries().stream()
           .findFirst()
           .ifPresent(
               hour ->
