@@ -12,7 +12,7 @@ body:
     id: version
     attributes:
       label: SDK version
-      description: '`EnsembleWeatherClient.VERSION`, or the version in your build file.'
+      description: '`Client.VERSION`, or the version in your build file.'
       placeholder: 0.1.0
     validations:
       required: true

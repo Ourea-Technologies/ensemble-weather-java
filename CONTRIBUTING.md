@@ -28,7 +28,7 @@ That one command is what CI runs. The pieces:
 | `./gradlew formatCheck`          | fails on an unformatted file (CI)                                               |
 | `./gradlew compileJava`          | compiles with Error Prone, NullAway, `-Xlint:all -Werror` and doclint           |
 | `./gradlew spotbugsMain`         | SpotBugs with Find Security Bugs on the shipped bytecode                        |
-| `./gradlew test`                 | unit tests, the 43 shared vectors and the spec-drift tests                      |
+| `./gradlew test`                 | unit tests, the 58 shared vectors and the spec-drift tests                      |
 | `./gradlew test -PtestJdk=11`    | the same on another JDK (11, 17, 21, 25)                                        |
 | `./gradlew runExamples`          | every program in `examples/` against a local mock API                           |
 | `./gradlew mockApi`              | serves that mock on `http://127.0.0.1:8787`, for running examples by hand       |
@@ -46,7 +46,7 @@ hand, run `./gradlew mockApi` in one terminal and, in another,
 Use the [bug report form](https://github.com/Ourea-Technologies/ensemble-weather-java/issues/new?template=bug_report.yml).
 The most useful reports have:
 
-- the SDK version (`EnsembleWeatherClient.VERSION`) and the Java version and OS;
+- the SDK version (`Client.VERSION`) and the Java version and OS;
 - a minimal snippet that shows the problem, and what you expected instead;
 - the `requestId()` from the exception or `metadata()`, if there is one: it
   lets us find the request in our logs.
@@ -68,9 +68,13 @@ there and labelled `needs-spec`.
 
 - `src/main/java/com/oureawx/ensembleweather/`: the client, its options, the
   probability and total terms, the exceptions and the cache interface.
-- `.../model/`: the immutable response models, one class per schema of the
+- `.../types/`: the immutable response models, one class per schema of the
   OpenAPI spec, with builders. They were first drafted from the spec by a
   throwaway script and are maintained by hand; no generator is part of the build.
+  A field whose JSON name repeats its type's word takes the SDK name of
+  ensemble-weather-spec BEHAVIOR.md 3.0 (its decoder line in `Decoders` reads
+  the JSON name), and `SpecDriftTest` checks every accessor against the spec
+  through that table.
 - `.../internal/`: not exported by the module. The canonical query
   (`Query`), the `prob`/`totals` wire form (`Terms`), the request engine
   (retries, redirects, cache, errors: `Engine`), JSON (`Json`, `JsonFields`,
@@ -115,7 +119,7 @@ locks after changing a version with `./gradlew dependencies --write-locks`.
 
 ## Releasing (maintainers)
 
-1. Bump `version` in `build.gradle.kts` and `EnsembleWeatherClient.VERSION`
+1. Bump `version` in `build.gradle.kts` and `Client.VERSION`
    (a test checks they match), move "Unreleased" in `CHANGELOG.md` to the new
    version, and merge.
 2. Tag `vX.Y.Z` on `main` and push the tag. `release.yml` rebuilds, runs every
