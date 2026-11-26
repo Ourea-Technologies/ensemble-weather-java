@@ -2,13 +2,10 @@
 package com.oureawx.ensembleweather;
 
 import com.oureawx.ensembleweather.internal.Query;
-import com.oureawx.ensembleweather.model.UnitSystem;
+import com.oureawx.ensembleweather.types.UnitSystem;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Options for nearby locations ({@link EnsembleWeatherClient#getNearby(LocationId,
- * NearbyOptions)}).
- */
+/** Options for nearby locations ({@link Client#getNearby(LocationId, NearbyOptions)}). */
 public final class NearbyOptions {
   private static final NearbyOptions DEFAULTS = builder().build();
 

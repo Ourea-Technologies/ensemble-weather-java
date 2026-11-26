@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.oureawx.ensembleweather.ProbabilityTerm;
 import com.oureawx.ensembleweather.Threshold;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
 import org.junit.jupiter.api.Test;
 
 class QueryAndTermsTest {
@@ -84,5 +84,17 @@ class QueryAndTermsTest {
                 ProbabilityTerm.atLeast(Variable.PRECIPITATION, Threshold.millimetres(25.4)),
                 UnitSystem.IMPERIAL)
             .text);
+  }
+
+  @Test
+  void commaListsAreSortedDeduplicatedAndKeepTheirCommasLiteral() {
+    // BEHAVIOR.md 3.1 rule 5: each item encoded, the commas between items literal (%2C is another
+    // edge-cache entry).
+    assertEquals(
+        "sources=a%20b,snotel",
+        new Query().csv("sources", java.util.List.of("snotel", "a b", "snotel")).build());
+    assertEquals(
+        "bbox=-125,41.5,-116,49&near=45.33,-121.66",
+        new Query().numbers("near", 45.33, -121.66).numbers("bbox", -125, 41.5, -116, 49).build());
   }
 }

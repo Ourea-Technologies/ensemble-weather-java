@@ -11,9 +11,8 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Opt-in extras for a catalog detail ({@link EnsembleWeatherClient#getCatalogLocation(String,
- * CatalogDetailOptions)} and {@link EnsembleWeatherClient#getCatalogStation(String,
- * CatalogDetailOptions)}).
+ * Opt-in extras for a catalog detail ({@link Client#getCatalogLocation(String,
+ * CatalogDetailOptions)} and {@link Client#getCatalogStation(String, CatalogDetailOptions)}).
  */
 public final class CatalogDetailOptions {
   private static final CatalogDetailOptions DEFAULTS = builder().build();

@@ -2,15 +2,12 @@
 package com.oureawx.ensembleweather;
 
 import com.oureawx.ensembleweather.internal.Query;
-import com.oureawx.ensembleweather.model.UnitSystem;
+import com.oureawx.ensembleweather.types.UnitSystem;
 import java.util.Arrays;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 
-/**
- * Options for current conditions ({@link EnsembleWeatherClient#getCurrent(LocationId,
- * CurrentOptions)}).
- */
+/** Options for current conditions ({@link Client#getCurrent(LocationId, CurrentOptions)}). */
 public final class CurrentOptions {
   private static final CurrentOptions DEFAULTS = builder().build();
 

@@ -44,21 +44,21 @@ which CI runs on every change:
 // Quickstart: an anonymous forecast for Mt. Hood Meadows, Oregon (no API key).
 // Prints the next 24 hours' temperature as a p10-p90 range, and the chance of
 // at least 6 in (15 cm) of snow in the next 24 hours.
-import com.oureawx.ensembleweather.EnsembleWeatherClient;
+import com.oureawx.ensembleweather.Client;
 import com.oureawx.ensembleweather.ForecastOptions;
 import com.oureawx.ensembleweather.ProbabilityTerm;
 import com.oureawx.ensembleweather.Threshold;
-import com.oureawx.ensembleweather.model.ForecastResponse;
-import com.oureawx.ensembleweather.model.Percentile;
-import com.oureawx.ensembleweather.model.ProbabilityResult;
-import com.oureawx.ensembleweather.model.TimeSeriesPoint;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.ForecastResponse;
+import com.oureawx.ensembleweather.types.Percentile;
+import com.oureawx.ensembleweather.types.ProbabilityResult;
+import com.oureawx.ensembleweather.types.TimeSeriesPoint;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
 import java.util.List;
 
 public class Quickstart {
   public static void main(String[] args) {
-    EnsembleWeatherClient client = EnsembleWeatherClient.builder().build();
+    Client client = Client.builder().build();
     ForecastOptions options =
         ForecastOptions.builder()
             .probability(ProbabilityTerm.atLeast(Variable.SNOWFALL, Threshold.inches(6)))
@@ -67,7 +67,7 @@ public class Quickstart {
 
     String degrees = forecast.units() == UnitSystem.IMPERIAL ? "°F" : "°C";
     System.out.println(forecast.location().name() + ": temperature, next 24 h (p10 to p90)");
-    List<TimeSeriesPoint> hours = forecast.forecast().timeseries();
+    List<TimeSeriesPoint> hours = forecast.series().timeseries();
     for (TimeSeriesPoint hour : hours.subList(0, Math.min(25, hours.size()))) {
       hour.ensemble()
           .temperature()
@@ -79,10 +79,10 @@ public class Quickstart {
     }
 
     for (ProbabilityResult snow : forecast.probabilities()) {
-      if (snow.probability().isPresent()) {
+      if (snow.value().isPresent()) {
         System.out.printf(
             "Chance of 6 in (15 cm) or more of snow in the next 24 h: %.0f%% (%d members)%n",
-            snow.probability().getAsDouble() * 100, snow.members());
+            snow.value().getAsDouble() * 100, snow.members());
       } else {
         System.out.println("The chance of 6 in of snow is not available for this window yet.");
       }
@@ -96,8 +96,8 @@ public class Quickstart {
 Pass a key to the builder, or set the `OUREA_API_KEY` environment variable:
 
 ```java
-EnsembleWeatherClient client = EnsembleWeatherClient.builder().apiKey("ow_...").build();
-// or: OUREA_API_KEY=ow_... java -jar app.jar, then EnsembleWeatherClient.builder().build()
+Client client = Client.builder().apiKey("ow_...").build();
+// or: OUREA_API_KEY=ow_... java -jar app.jar, then Client.builder().build()
 ```
 
 |                                                      | Anonymous                  | Free key                   | Pro key                                                               |
@@ -106,8 +106,9 @@ EnsembleWeatherClient client = EnsembleWeatherClient.builder().apiKey("ow_...").
 | Forecasts at any coordinates (`getPointForecast`)    | no                         | no                         | yes                                                                   |
 | Search and catalog                                   | yes                        | yes                        | yes, larger list budgets                                              |
 
-See [pricing](https://oureawx.com/pricing). Search, catalog details and
-attribution are always sent **without** the key, even when you have one, so
+See [pricing](https://oureawx.com/pricing). `getSnowTrend` needs Plus or Pro
+(`PLUS_REQUIRED` otherwise). Search, catalog details, attribution and
+`getComposition` are always sent **without** the key, even when you have one, so
 every caller shares one edge-cache entry; catalog list pages and forecasts are
 sent with it. Call `.sendKeyOnOpenRoutes(true)` to attribute every request to
 your key. The key is never logged, never in an exception message or
@@ -136,7 +137,7 @@ ForecastResponse f =
 for (ProbabilityResult p : f.probabilities()) {
   System.out.println(p.variable() + " " + p.op() + " " + p.threshold() + " over "
       + p.windowStartHours() + "-" + p.windowEndHours() + " h: "
-      + p.probability() + " from " + p.members() + " members");
+      + p.value() + " from " + p.members() + " members");
 }
 
 // A storm total: the distribution of each member's own total over the window
@@ -145,7 +146,7 @@ Optional<Quantiles> storm = f.windowTotals().get(0).quantiles();
 
 // Quantiles: the served ranges, by name.
 Optional<QuantileRange> spread =
-    f.forecast().timeseries().get(0).ensemble().temperature().range(Percentile.P10, Percentile.P90);
+    f.series().timeseries().get(0).ensemble().temperature().range(Percentile.P10, Percentile.P90);
 ```
 
 The SDK never sums, averages or interpolates quantiles, and never derives a
@@ -154,13 +155,89 @@ from the full ensemble (summing hourly quantiles gives a wrong storm total).
 Thresholds you give in another unit (`Threshold.inches(6)` on a metric
 request) are converted exactly before sending; response values are always in
 the request's units. Answers are matched to your terms by the `term()` the
-server echoes and come back in the order you asked; an empty `probability()`
+server echoes and come back in the order you asked; an empty `value()`
 is never 0, and `nullReason()` says why (`WINDOW_NOT_COVERED`,
 `TOO_FEW_MEMBERS`, `VARIABLE_UNAVAILABLE`). Wind direction is circular: each
 hour's `ensemble().windDirection()` is a `CircularStats` (mean, spread and the
 clockwise 50 % and 90 % sectors, whose `to` may be numerically less than
 `from`), not quantiles.
 More at [docs.oureawx.com/concepts/probabilities](https://docs.oureawx.com/concepts/probabilities).
+
+## Names that differ from the API's JSON
+
+A JSON field that repeats a word of the type holding it would read twice in
+Java (`forecast.forecast()`, `current.current()`, `probability.probability()`),
+so the SDK names it differently. There is one table for every Ourea SDK
+(ensemble-weather-spec BEHAVIOR.md 3.0), and each accessor's Javadoc starts
+with its JSON name. Every other field keeps its JSON name in camelCase. The
+GeoJSON routes (`getAlertOutlines`, `getAvalancheZones`) are passed through
+untouched: a feature's `properties()` and its geometry's `coordinates()` are
+the API's JSON (`JsonValue`) with its wire keys, so an avalanche zone's
+`properties` keeps `forecast_url` and `danger_level`.
+
+| Type | JSON field | Java accessor |
+|---|---|---|
+| `ForecastResponse` | `forecast` | `series()` |
+| `ForecastResponse` | `elevation_forecasts` | `elevations()` |
+| `CurrentResponse` | `current` | `now()` |
+| `CurrentConditions` | `condition` | `code()` |
+| `CurrentConditions` | `condition_text` | `text()` |
+| `CurrentConditions` | `condition_icon` | `icon()` |
+| `CurrentStation` | `station_id` | `id()` |
+| `ProbabilityResult` | `probability` | `value()` |
+| `ProbabilityThresholds` | `daily_precipitation_probability` | `dailyPrecipitation()` |
+| `ProbabilityThresholds` | `daily_precipitation_occurrence_probability` | `dailyPrecipitationOccurrence()` |
+| `ProbabilityThresholds` | `daily_snow_probability` | `dailySnow()` |
+| `WindowTotal` | `window_start_hours` | `startHours()` |
+| `WindowTotal` | `window_end_hours` | `endHours()` |
+| `ModelMembers` | `members` | `items()` |
+| `MemberForecast` | `member_id` | `id()` |
+| `MemberPlume` | `members` | `pool()` |
+| `AlertsResponse` | `alerts` | `items()` |
+| `AlertsResponse` | `alert_count` | `count()` |
+| `LocationsResponse` | `locations` | `items()` |
+| `NearbyLocationsResponse` | `location` | `origin()` |
+| `NearbyLocationsResponse` | `locations` | `items()` |
+| `NearbyPointResponse` | `locations` | `items()` |
+| `RunsResponse` | `runs` | `items()` |
+| `ElevationForecast` | `elevation` | `height()` |
+| `ElevationSummary` | `elevation` | `height()` |
+| `SnowTrendResponseElevation` | `elevation` | `height()` |
+| `CatalogElevation` | `elevation_m` | `heightM()` |
+| `CatalogStation, CatalogStationDetail` | `source_station_id` | `sourceId()` |
+| `CatalogStation, CatalogStationDetail` | `station_status` | `status()` |
+| `CatalogStation, CatalogStationDetail` | `station_url` | `url()` |
+| `CatalogNearbyStation` | `station_status` | `status()` |
+| `CatalogTemplateSummary` | `template_variant` | `variant()` |
+| `CatalogResolvedEntry` | `resolved_locale` | `locale()` |
+| `SensorObservation` | `observation_time` | `observedAt()` |
+| `PassHour` | `snow_level_above_pass` | `snowLevelMargin()` |
+| `PassStatusSegment` | `status` | `state()` |
+| `PassStatusSegment` | `status_text` | `text()` |
+| `AvalancheForecast` | `forecast_url` | `url()` |
+| `SeasonTotal` | `total` | `amount()` |
+| `SnowTrendDay` | `snow` | `amount()` |
+| `PlaceSummary` | `short` | `shortText()` (a Java keyword) |
+| `PlaceSummary` | `long` | `longText()` (a Java keyword) |
+| `ElevationSummary, CatalogElevation` | `default / is_default` | `isDefault()` (a Java keyword) |
+
+## Every route
+
+| Method (each with an `...Async` twin) | Route | Access |
+|---|---|---|
+| `getForecast`, `getPointForecast` | a named location's forecast; one at coordinates (`membersPlume()` for the plume view) | anonymous; Pro |
+| `getCurrent`, `getPointCurrent` | current conditions (a mountain pass also gets `pass()`) | anonymous; Pro |
+| `getAlerts`, `getPointAlerts` | active NWS alerts | anonymous; Pro |
+| `getNearby`, `getPointNearby` | nearby locations | anonymous |
+| `searchLocations` | search by name, optionally `sort` by a metric and `near` a point | anonymous, keyless |
+| `explore`, `iterateExplore` | places ranked by a metric (`SNOW_5D`, `BASE_DEPTH`, `SEASON_PRECIP`, ...) | anonymous |
+| `getSeason` | observed season-to-date precipitation and snowfall | anonymous |
+| `getSnowTrend` | each recent run's daily snowfall, run by run | Plus or Pro |
+| `getSnowpack`, `getSnowpackPlume` | the modelled snowpack and its snow-depth plume (beta) | anonymous |
+| `getAlertOutlines`, `getAvalancheZones` | GeoJSON for maps: alert outlines, avalanche zones and ratings | anonymous |
+| `listLocations`, `iterateLocations` | every location, paged | anonymous |
+| `listCatalogLocations`, `getCatalogLocation`, `listCatalogStations`, `getCatalogStation` | the catalog | anonymous |
+| `getRuns`, `getComposition`, `getAttribution` | served runs, the blend's models and members, data credits | anonymous |
 
 ## More examples
 
@@ -174,6 +251,7 @@ More at [docs.oureawx.com/concepts/probabilities](https://docs.oureawx.com/conce
 | [`CurrentAndAlerts.java`](examples/CurrentAndAlerts.java) | current conditions and active alerts for a location                     |
 | [`ErrorHandling.java`](examples/ErrorHandling.java)       | catching an out-of-coverage error by its type; reading rate-limit state |
 | [`Units.java`](examples/Units.java)                       | the same forecast in metric and imperial                                |
+| [`SnowRankings.java`](examples/SnowRankings.java)         | `explore` by the next 5 days' snow, then the season so far              |
 
 Run them all against a local mock of the API with `./gradlew runExamples`.
 Every operation also has an `...Async` twin returning a `CompletableFuture`
@@ -182,7 +260,7 @@ Every operation also has an `...Async` twin returning a `CompletableFuture`
 
 ## Errors, retries and rate limits
 
-Every exception is an unchecked `EnsembleWeatherException` with a stable
+Every exception is an unchecked `OureaException` with a stable
 `category()`. HTTP errors carry `status()`, `code()` (verbatim, even when new),
 `getMessage()`, `requestId()`, `docUrl()` (the code's entry on the docs errors
 page) and, on a 400 about one parameter, `param()`; `RateLimitException` adds
@@ -192,7 +270,7 @@ page) and, on a 400 about one parameter, `param()`; `RateLimitException` adds
 | Class                      | Category           | When                                                               |
 | -------------------------- | ------------------ | ------------------------------------------------------------------ |
 | `AuthenticationException`  | `AUTHENTICATION`   | invalid or missing key (401)                                       |
-| `PermissionException`      | `PERMISSION`       | your plan does not allow it, such as `PRO_REQUIRED` (403)          |
+| `PermissionException`      | `PERMISSION`       | your plan does not allow it: `PRO_REQUIRED`, `PLUS_REQUIRED` (403) |
 | `NotFoundException`        | `NOT_FOUND`        | no such location or route (404, 410)                               |
 | `InvalidRequestException`  | `INVALID_REQUEST`  | the server rejected a parameter (400)                              |
 | `OutsideCoverageException` | `OUTSIDE_COVERAGE` | `OUTSIDE_COVERAGE` (404): the point is outside the domain          |

@@ -2,7 +2,7 @@
 package com.oureawx.ensembleweather;
 
 import com.oureawx.ensembleweather.internal.Query;
-import com.oureawx.ensembleweather.model.UnitSystem;
+import com.oureawx.ensembleweather.types.UnitSystem;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,10 +13,9 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Options for a forecast ({@link EnsembleWeatherClient#getForecast(LocationId, ForecastOptions)}
- * and {@link EnsembleWeatherClient#getPointForecast(Coordinates, ForecastOptions)}). Every option
- * left unset, or set to the API's default, is left out of the request, so equal requests share one
- * edge-cache entry.
+ * Options for a forecast ({@link Client#getForecast(LocationId, ForecastOptions)} and {@link
+ * Client#getPointForecast(Coordinates, ForecastOptions)}). Every option left unset, or set to the
+ * API's default, is left out of the request, so equal requests share one edge-cache entry.
  *
  * <pre>{@code
  * ForecastOptions options = ForecastOptions.builder()
@@ -34,7 +33,7 @@ public final class ForecastOptions {
   private final @Nullable Integer maxHours;
   private final @Nullable Boolean includePast;
   private final @Nullable Boolean models;
-  private final @Nullable Boolean members;
+  private final @Nullable String members;
   private final List<String> elevations;
   private final @Nullable Boolean daily;
   private final @Nullable Integer maxDays;
@@ -106,7 +105,7 @@ public final class ForecastOptions {
         .integer("max_hours", maxHours == null ? null : maxHours.longValue(), 24L)
         .bool("include_past", includePast, false)
         .bool("models", models, false)
-        .bool("members", members, false)
+        .string("members", members, "false")
         .csv("elevations", elevations)
         .bool("daily", daily, true)
         .integer("max_days", maxDays == null ? null : maxDays.longValue(), null)
@@ -137,7 +136,7 @@ public final class ForecastOptions {
     private @Nullable Integer maxHours;
     private @Nullable Boolean includePast;
     private @Nullable Boolean models;
-    private @Nullable Boolean members;
+    private @Nullable String members;
     private List<String> elevations = List.of();
     private @Nullable Boolean daily;
     private @Nullable Integer maxDays;
@@ -204,15 +203,48 @@ public final class ForecastOptions {
     }
 
     /**
-     * Include each ensemble member's values ({@code members}, default false): the plume view for
-     * Free callers, every member variable for Pro.
+     * Include each ensemble member's values ({@code members=true}, default false): every member
+     * variable the tier carries, per hour ({@code TimeSeriesPoint.members}).
      *
      * @param members whether to include them
      * @return this builder
      */
     public Builder members(boolean members) {
-      this.members = members;
+      this.members = members ? "true" : "false";
       return this;
+    }
+
+    /**
+     * The members as the plume view ({@code members=plume}): columns per model and the pooled
+     * members in {@code series().plume()}, instead of per-hour members ({@code
+     * series().timeseries()} is then empty). {@code membersView()} still names the tier's member
+     * set.
+     *
+     * @return this builder
+     */
+    public Builder membersPlume() {
+      this.members = "plume";
+      return this;
+    }
+
+    /**
+     * The {@code members} value as the API spells it: {@code "true"}, {@code "false"} or {@code
+     * "plume"}.
+     *
+     * @param members the value
+     * @return this builder
+     * @throws UsageException for any other value
+     */
+    public Builder members(String members) {
+      switch (Objects.requireNonNull(members, "members")) {
+        case "true":
+        case "false":
+        case "plume":
+          this.members = members;
+          return this;
+        default:
+          throw new UsageException("members is true, false or \"plume\", not \"" + members + "\"");
+      }
     }
 
     /**

@@ -1,19 +1,19 @@
 // Storm totals: the distribution of each member's own precipitation and
 // snowfall total over a window, computed by the server (never summed hourly
 // quantiles).
-import com.oureawx.ensembleweather.EnsembleWeatherClient;
+import com.oureawx.ensembleweather.Client;
 import com.oureawx.ensembleweather.ForecastOptions;
 import com.oureawx.ensembleweather.TotalTerm;
 import com.oureawx.ensembleweather.Window;
-import com.oureawx.ensembleweather.model.ForecastResponse;
-import com.oureawx.ensembleweather.model.Percentile;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
-import com.oureawx.ensembleweather.model.WindowTotal;
+import com.oureawx.ensembleweather.types.ForecastResponse;
+import com.oureawx.ensembleweather.types.Percentile;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
+import com.oureawx.ensembleweather.types.WindowTotal;
 
 public class StormTotal {
   public static void main(String[] args) {
-    EnsembleWeatherClient client = EnsembleWeatherClient.builder().build();
+    Client client = Client.builder().build();
     ForecastResponse forecast =
         client.getForecast(
             "or/mt-hood-meadows",
@@ -24,7 +24,7 @@ public class StormTotal {
 
     String unit = forecast.units() == UnitSystem.IMPERIAL ? " in" : " mm";
     for (WindowTotal total : forecast.windowTotals()) {
-      String label = total.variableAsString() + " over the next " + total.windowEndHours() + " h";
+      String label = total.variableAsString() + " over the next " + total.endHours() + " h";
       if (!total.quantiles().isPresent()) {
         System.out.println(label + ": not covered by this model run yet");
         continue;

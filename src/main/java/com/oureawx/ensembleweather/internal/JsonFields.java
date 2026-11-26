@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package com.oureawx.ensembleweather.internal;
 
-import com.oureawx.ensembleweather.model.JsonValue;
+import com.oureawx.ensembleweather.types.JsonValue;
 import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -10,9 +10,14 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -471,5 +476,238 @@ public final class JsonFields {
       out.add(List.copyOf(ints));
     }
     return out;
+  }
+
+  private MalformedResponseException wrongItem(String name, int i, String expected) {
+    return new MalformedResponseException(path + "." + name + "[" + i + "] should be " + expected);
+  }
+
+  private static @Nullable BigDecimal numberOrNull(JsonValue v) {
+    return v.isNull() ? null : v.asNumber().orElse(null);
+  }
+
+  private List<JsonValue> rows(String name, JsonValue row, int i) {
+    if (row.kind() != JsonValue.Kind.ARRAY) {
+      throw wrongItem(name, i, "an array");
+    }
+    return row.asArray();
+  }
+
+  /**
+   * An array of numbers; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the numbers
+   */
+  public List<Double> numberList(String name) {
+    List<JsonValue> items = array(name);
+    List<Double> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      BigDecimal d = numberOrNull(items.get(i));
+      if (d == null) {
+        throw wrongItem(name, i, "a number");
+      }
+      out.add(d.doubleValue());
+    }
+    return List.copyOf(out);
+  }
+
+  private List<OptionalDouble> nullableNumbers(String name, List<JsonValue> items) {
+    List<OptionalDouble> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      JsonValue v = items.get(i);
+      BigDecimal d = numberOrNull(v);
+      if (d == null && !v.isNull()) {
+        throw wrongItem(name, i, "a number or null");
+      }
+      out.add(d == null ? OptionalDouble.empty() : OptionalDouble.of(d.doubleValue()));
+    }
+    return List.copyOf(out);
+  }
+
+  private List<OptionalInt> nullableIntegers(String name, List<JsonValue> items) {
+    List<OptionalInt> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      JsonValue v = items.get(i);
+      BigDecimal d = numberOrNull(v);
+      if (d == null && !v.isNull()) {
+        throw wrongItem(name, i, "an integer or null");
+      }
+      try {
+        out.add(d == null ? OptionalInt.empty() : OptionalInt.of(d.intValueExact()));
+      } catch (ArithmeticException e) {
+        throw wrongItem(name, i, "an integer");
+      }
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of numbers and nulls; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the numbers, each empty where the API sent null
+   */
+  public List<OptionalDouble> nullableNumberList(String name) {
+    return nullableNumbers(name, array(name));
+  }
+
+  /**
+   * An array of arrays of numbers; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the rows
+   */
+  public List<List<Double>> numberLists(String name) {
+    List<JsonValue> items = array(name);
+    List<List<Double>> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      List<Double> row = new ArrayList<>();
+      for (JsonValue cell : rows(name, items.get(i), i)) {
+        BigDecimal d = numberOrNull(cell);
+        if (d == null) {
+          throw wrongItem(name, i, "an array of numbers");
+        }
+        row.add(d.doubleValue());
+      }
+      out.add(List.copyOf(row));
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of arrays of numbers and nulls; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the rows, each cell empty where the API sent null
+   */
+  public List<List<OptionalDouble>> nullableNumberLists(String name) {
+    List<JsonValue> items = array(name);
+    List<List<OptionalDouble>> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      out.add(nullableNumbers(name + "[" + i + "]", rows(name, items.get(i), i)));
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of arrays of integers and nulls; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the rows, each cell empty where the API sent null
+   */
+  public List<List<OptionalInt>> nullableIntegerLists(String name) {
+    List<JsonValue> items = array(name);
+    List<List<OptionalInt>> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      out.add(nullableIntegers(name + "[" + i + "]", rows(name, items.get(i), i)));
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of integers; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the integers
+   */
+  public List<Integer> integerList(String name) {
+    List<JsonValue> items = array(name);
+    List<Integer> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      BigDecimal d = numberOrNull(items.get(i));
+      if (d == null) {
+        throw wrongItem(name, i, "an integer");
+      }
+      try {
+        out.add(d.intValueExact());
+      } catch (ArithmeticException e) {
+        throw wrongItem(name, i, "an integer");
+      }
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of RFC 3339 date-times; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the instants
+   */
+  public List<Instant> instantList(String name) {
+    List<Instant> out = new ArrayList<>();
+    for (String s : stringList(name)) {
+      try {
+        out.add(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(s, OffsetDateTime::from).toInstant());
+      } catch (DateTimeException e) {
+        throw new MalformedResponseException(path + "." + name + " holds a non-date-time: " + s, e);
+      }
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of ISO dates; absent or null is an empty list.
+   *
+   * @param name the member
+   * @return the dates
+   */
+  public List<LocalDate> dateList(String name) {
+    List<LocalDate> out = new ArrayList<>();
+    for (String s : stringList(name)) {
+      try {
+        out.add(LocalDate.parse(s));
+      } catch (DateTimeException e) {
+        throw new MalformedResponseException(path + "." + name + " holds a non-date: " + s, e);
+      }
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An array of objects and nulls; absent or null is an empty list.
+   *
+   * @param name the member
+   * @param decoder decodes each object
+   * @param <T> the model type
+   * @return the models, each empty where the API sent null
+   */
+  public <T> List<Optional<T>> nullableList(String name, Function<JsonFields, T> decoder) {
+    List<JsonValue> items = array(name);
+    List<Optional<T>> out = new ArrayList<>(items.size());
+    for (int i = 0; i < items.size(); i++) {
+      JsonValue v = items.get(i);
+      out.add(
+          v.isNull()
+              ? Optional.empty()
+              : Optional.of(decoder.apply(child(name, v, path + "." + name + "[" + i + "]"))));
+    }
+    return List.copyOf(out);
+  }
+
+  /**
+   * An object of strings (a code to text map, its keys kept as the API sent them); absent or null
+   * is an empty map.
+   *
+   * @param name the member
+   * @return the map, in the API's order
+   */
+  public Map<String, String> stringMap(String name) {
+    JsonValue v = raw(name);
+    if (v == null) {
+      return Map.of();
+    }
+    if (v.kind() != JsonValue.Kind.OBJECT) {
+      throw wrong(name, "an object", v);
+    }
+    Map<String, String> out = new LinkedHashMap<>();
+    for (Map.Entry<String, JsonValue> e : v.asObject().entrySet()) {
+      out.put(
+          e.getKey(),
+          e.getValue()
+              .asString()
+              .orElseThrow(() -> wrong(name + "." + e.getKey(), "a string", e.getValue())));
+    }
+    return Collections.unmodifiableMap(out);
   }
 }

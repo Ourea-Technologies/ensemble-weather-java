@@ -1,0 +1,574 @@
+// SPDX-License-Identifier: BSD-2-Clause
+package com.oureawx.ensembleweather.types;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * "Right now" as one flat object: a view of ONE served hourly point, never a second forecast.
+ * {@code time} names the hour (the served hour nearest the request time, within one hour of it —
+ * the window in which the nowcast blend's time taper is at full weight); every value is copied from
+ * that hour, in the request's {@code units}:.
+ *
+ * <p>Immutable. Build one with {@link #builder()} (for tests and mocks); the client decodes
+ * responses into it. Wire schema: {@code CurrentConditions}.
+ */
+public final class CurrentConditions extends Model {
+  private final Instant time;
+  private final double temperature;
+  private final @Nullable Double feelsLike;
+  private final String code;
+  private final String text;
+  private final String icon;
+  private final double windSpeed;
+  private final @Nullable Double windGust;
+  private final double windDirection;
+  private final @Nullable Double relativeHumidity;
+  private final @Nullable Double dewpoint;
+  private final @Nullable Double precipitationProbability;
+  private final String source;
+  private final @Nullable CurrentStation station;
+
+  private final boolean measured;
+  private final @Nullable Double cloudCover;
+
+  private CurrentConditions(Builder b) {
+    this.time = require(b.time, "time");
+    this.temperature = require(b.temperature, "temperature");
+    this.feelsLike = b.feelsLike;
+    this.code = require(b.code, "condition");
+    this.text = require(b.text, "condition_text");
+    this.icon = require(b.icon, "condition_icon");
+    this.windSpeed = require(b.windSpeed, "wind_speed");
+    this.windGust = b.windGust;
+    this.windDirection = require(b.windDirection, "wind_direction");
+    this.relativeHumidity = b.relativeHumidity;
+    this.dewpoint = b.dewpoint;
+    this.precipitationProbability = b.precipitationProbability;
+    this.source = require(b.source, "source");
+    this.station = b.station;
+    this.measured = require(b.measured, "measured");
+    this.cloudCover = b.cloudCover;
+  }
+
+  /**
+   * Returns a new builder.
+   *
+   * @return an empty builder
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Returns a builder holding this object's values.
+   *
+   * @return a builder to make a modified copy
+   */
+  public Builder toBuilder() {
+    Builder b = new Builder();
+    b.time = this.time;
+    b.temperature = this.temperature;
+    b.feelsLike = this.feelsLike;
+    b.code = this.code;
+    b.text = this.text;
+    b.icon = this.icon;
+    b.windSpeed = this.windSpeed;
+    b.windGust = this.windGust;
+    b.windDirection = this.windDirection;
+    b.relativeHumidity = this.relativeHumidity;
+    b.dewpoint = this.dewpoint;
+    b.precipitationProbability = this.precipitationProbability;
+    b.source = this.source;
+    b.station = this.station;
+    b.measured = this.measured;
+    b.cloudCover = this.cloudCover;
+    return b;
+  }
+
+  /**
+   * {@code valid_time} of the hour the block is read from.
+   *
+   * @return the {@code time} value
+   */
+  public Instant time() {
+    return time;
+  }
+
+  /**
+   * °C (metric), °F (imperial), K (kelvin).
+   *
+   * @return the {@code temperature} value
+   */
+  public double temperature() {
+    return temperature;
+  }
+
+  /**
+   * Same unit as {@code temperature}.
+   *
+   * @return the {@code feels_like} value, or empty when the response omits it
+   */
+  public OptionalDouble feelsLike() {
+    return feelsLike == null ? OptionalDouble.empty() : OptionalDouble.of(feelsLike);
+  }
+
+  /**
+   * (JSON {@code condition}) The hour's stable condition code, as {@code TimeSeriesPoint.condition}
+   * ({@code partly_cloudy}). Treat unknown codes as additive.
+   *
+   * @return the {@code condition} value ({@link HourlyCondition#UNKNOWN} for a value this SDK
+   *     version does not know)
+   */
+  public HourlyCondition code() {
+    return HourlyCondition.fromWireValue(code);
+  }
+
+  /**
+   * The {@code condition} value exactly as the API sent it, even when this SDK version does not
+   * know it.
+   *
+   * @return the raw {@code condition} string
+   */
+  public String codeAsString() {
+    return code;
+  }
+
+  /**
+   * (JSON {@code condition_text}) The display text for {@code condition}, as {@code
+   * TimeSeriesPoint.condition_text}.
+   *
+   * @return the {@code condition_text} value
+   */
+  public String text() {
+    return text;
+  }
+
+  /**
+   * (JSON {@code condition_icon}) The {@code condition_icon} value.
+   *
+   * @return the {@code condition_icon} value ({@link ConditionIcon#UNKNOWN} for a value this SDK
+   *     version does not know)
+   */
+  public ConditionIcon icon() {
+    return ConditionIcon.fromWireValue(icon);
+  }
+
+  /**
+   * The {@code condition_icon} value exactly as the API sent it, even when this SDK version does
+   * not know it.
+   *
+   * @return the raw {@code condition_icon} string
+   */
+  public String iconAsString() {
+    return icon;
+  }
+
+  /**
+   * M/s (metric, kelvin) or mph (imperial).
+   *
+   * @return the {@code wind_speed} value
+   */
+  public double windSpeed() {
+    return windSpeed;
+  }
+
+  /**
+   * Same unit as {@code wind_speed}. Omitted where the hour serves no gust.
+   *
+   * @return the {@code wind_gust} value, or empty when the response omits it
+   */
+  public OptionalDouble windGust() {
+    return windGust == null ? OptionalDouble.empty() : OptionalDouble.of(windGust);
+  }
+
+  /**
+   * Degrees clockwise from north, direction the wind blows FROM.
+   *
+   * @return the {@code wind_direction} value
+   */
+  public double windDirection() {
+    return windDirection;
+  }
+
+  /**
+   * Relative humidity, percent (0–100).
+   *
+   * @return the {@code relative_humidity} value, or empty when the response omits it
+   */
+  public OptionalDouble relativeHumidity() {
+    return relativeHumidity == null ? OptionalDouble.empty() : OptionalDouble.of(relativeHumidity);
+  }
+
+  /**
+   * Same unit as {@code temperature}.
+   *
+   * @return the {@code dewpoint} value, or empty when the response omits it
+   */
+  public OptionalDouble dewpoint() {
+    return dewpoint == null ? OptionalDouble.empty() : OptionalDouble.of(dewpoint);
+  }
+
+  /**
+   * Probability (0–1) of at least 0.254 mm (0.01 in, the NWS measurable event) in the hour: {@code
+   * ensemble.precipitation.probability} of the hour.
+   *
+   * @return the {@code precipitation_probability} value, or empty when the response omits it
+   */
+  public OptionalDouble precipitationProbability() {
+    return precipitationProbability == null
+        ? OptionalDouble.empty()
+        : OptionalDouble.of(precipitationProbability);
+  }
+
+  /**
+   * {@code nowcast} — at least one live observation (surface station, MRMS radar, GOES cloud mask)
+   * carried weight at this hour. {@code model} — none did; the hour is the calibrated forecast
+   * alone.
+   *
+   * @return the {@code source} value ({@link ConditionsSource#UNKNOWN} for a value this SDK version
+   *     does not know)
+   */
+  public ConditionsSource source() {
+    return ConditionsSource.fromWireValue(source);
+  }
+
+  /**
+   * The {@code source} value exactly as the API sent it, even when this SDK version does not know
+   * it.
+   *
+   * @return the raw {@code source} string
+   */
+  public String sourceAsString() {
+    return source;
+  }
+
+  /**
+   * The surface station whose reading anchored temperature, dewpoint and wind at this hour. Omitted
+   * when none did.
+   *
+   * @return the {@code station} value, or empty when the response omits it
+   */
+  public Optional<CurrentStation> station() {
+    return Optional.ofNullable(station);
+  }
+
+  /**
+   * The hour in progress's {@code measured}, the hour {@code condition} and {@code
+   * precipitation_probability} are read from: the radar's published accumulation for that clock
+   * hour so far is served above 0 (above 0.00 mm and 0.000 in), so {@code condition} states the
+   * precipitation falling beside a chance that can be small. Show "Measured" in place of the
+   * chance. Always present. Additive; Cap'n Proto {@code CurrentConditions.measured}.
+   *
+   * @return the {@code measured} value
+   */
+  public boolean measured() {
+    return measured;
+  }
+
+  /**
+   * Cloud cover, percent (0-100), the mean of the hour in progress's {@code ensemble.cloud_cover}:
+   * the hour {@code condition} is read from, so the number and the label describe one hour. The
+   * label is the most likely sky class of that hour's distribution, so on a wide distribution it
+   * can read "Sunny" beside a mean near 50. Omitted where the hour serves no cloud cover. Additive;
+   * Cap'n Proto {@code CurrentConditions.cloudCover}.
+   *
+   * @return the {@code cloud_cover} value, or empty when the response omits it
+   */
+  public OptionalDouble cloudCover() {
+    return cloudCover == null ? OptionalDouble.empty() : OptionalDouble.of(cloudCover);
+  }
+
+  @Override
+  Object[] fieldValues() {
+    return new Object[] {
+      time,
+      temperature,
+      feelsLike,
+      code,
+      text,
+      icon,
+      windSpeed,
+      windGust,
+      windDirection,
+      relativeHumidity,
+      dewpoint,
+      precipitationProbability,
+      source,
+      station,
+      measured,
+      cloudCover
+    };
+  }
+
+  @Override
+  String[] fieldNames() {
+    return NAMES;
+  }
+
+  private static final String[] NAMES = {
+    "time",
+    "temperature",
+    "feelsLike",
+    "code",
+    "text",
+    "icon",
+    "windSpeed",
+    "windGust",
+    "windDirection",
+    "relativeHumidity",
+    "dewpoint",
+    "precipitationProbability",
+    "source",
+    "station",
+    "measured",
+    "cloudCover"
+  };
+
+  /** Builds a {@link CurrentConditions}. */
+  public static final class Builder {
+    private @Nullable Instant time;
+    private @Nullable Double temperature;
+    private @Nullable Double feelsLike;
+    private @Nullable String code;
+    private @Nullable String text;
+    private @Nullable String icon;
+    private @Nullable Double windSpeed;
+    private @Nullable Double windGust;
+    private @Nullable Double windDirection;
+    private @Nullable Double relativeHumidity;
+    private @Nullable Double dewpoint;
+    private @Nullable Double precipitationProbability;
+    private @Nullable String source;
+    private @Nullable CurrentStation station;
+
+    private @Nullable Boolean measured;
+    private @Nullable Double cloudCover;
+
+    private Builder() {}
+
+    /**
+     * Sets {@link CurrentConditions#time()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder time(Instant value) {
+      this.time = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#temperature()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder temperature(double value) {
+      this.temperature = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#feelsLike()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder feelsLike(@Nullable Double value) {
+      this.feelsLike = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#code()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder code(HourlyCondition value) {
+      this.code = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#codeAsString()}, the raw wire value, kept verbatim even when
+     * this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder codeAsString(String value) {
+      this.code = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#text()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder text(String value) {
+      this.text = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#icon()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder icon(ConditionIcon value) {
+      this.icon = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#iconAsString()}, the raw wire value, kept verbatim even when
+     * this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder iconAsString(String value) {
+      this.icon = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#windSpeed()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder windSpeed(double value) {
+      this.windSpeed = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#windGust()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder windGust(@Nullable Double value) {
+      this.windGust = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#windDirection()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder windDirection(double value) {
+      this.windDirection = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#relativeHumidity()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder relativeHumidity(@Nullable Double value) {
+      this.relativeHumidity = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#dewpoint()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder dewpoint(@Nullable Double value) {
+      this.dewpoint = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#precipitationProbability()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder precipitationProbability(@Nullable Double value) {
+      this.precipitationProbability = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#source()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder source(ConditionsSource value) {
+      this.source = wire(value.wireValue());
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#sourceAsString()}, the raw wire value, kept verbatim even when
+     * this SDK version does not know it.
+     *
+     * @param value the raw value
+     * @return this builder
+     */
+    public Builder sourceAsString(String value) {
+      this.source = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#station()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder station(@Nullable CurrentStation value) {
+      this.station = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#measured()}. Required.
+     *
+     * @param value the value
+     * @return this builder
+     */
+    public Builder measured(boolean value) {
+      this.measured = value;
+      return this;
+    }
+
+    /**
+     * Sets {@link CurrentConditions#cloudCover()}.
+     *
+     * @param value the value, or null for absent
+     * @return this builder
+     */
+    public Builder cloudCover(@Nullable Double value) {
+      this.cloudCover = value;
+      return this;
+    }
+
+    /**
+     * Builds the {@link CurrentConditions}.
+     *
+     * @return the immutable CurrentConditions
+     * @throws IllegalStateException if a required value was not set
+     */
+    public CurrentConditions build() {
+      return new CurrentConditions(this);
+    }
+  }
+}

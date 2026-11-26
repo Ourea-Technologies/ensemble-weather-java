@@ -2,8 +2,8 @@
 package com.oureawx.ensembleweather;
 
 /**
- * The category of an {@link EnsembleWeatherException}: one per subclass. HTTP errors are mapped by
- * the API's error code first, and by HTTP status when the code is unknown or the body is not JSON.
+ * The category of an {@link OureaException}: one per subclass. HTTP errors are mapped by the API's
+ * error code first, and by HTTP status when the code is unknown or the body is not JSON.
  */
 public enum ErrorCategory {
   /**

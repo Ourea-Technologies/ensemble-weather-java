@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.StreamReadFeature;
-import com.oureawx.ensembleweather.model.JsonValue;
+import com.oureawx.ensembleweather.types.JsonValue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

@@ -4,7 +4,7 @@ package com.oureawx.ensembleweather;
 import org.jspecify.annotations.Nullable;
 
 /** No such location or route ({@code LOCATION_NOT_FOUND}, {@code NOT_FOUND}, HTTP 404 or 410). */
-public final class NotFoundException extends EnsembleWeatherException {
+public final class NotFoundException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**

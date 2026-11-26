@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Filters and paging for the catalog location list ({@link
- * EnsembleWeatherClient#listCatalogLocations(CatalogLocationQuery)}).
+ * Client#listCatalogLocations(CatalogLocationQuery)}).
  */
 public final class CatalogLocationQuery {
   private static final CatalogLocationQuery DEFAULTS = builder().build();

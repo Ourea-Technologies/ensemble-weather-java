@@ -6,7 +6,7 @@ package com.oureawx.ensembleweather;
  * {@code maxRetries} times, except a TLS verification failure. {@link #getCause()} is the
  * underlying exception.
  */
-public final class ConnectionException extends EnsembleWeatherException {
+public final class ConnectionException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**

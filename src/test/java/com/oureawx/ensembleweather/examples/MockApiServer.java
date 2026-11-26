@@ -2,7 +2,7 @@
 package com.oureawx.ensembleweather.examples;
 
 import com.oureawx.ensembleweather.internal.Json;
-import com.oureawx.ensembleweather.model.JsonValue;
+import com.oureawx.ensembleweather.types.JsonValue;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -174,6 +174,7 @@ public final class MockApiServer implements AutoCloseable {
         a.put("to", str("2026-11-17T00:00:00Z"));
         a.put("quantiles", quantiles);
         a.put("members", num(131));
+        a.put("method", str("members"));
         a.put("null_reason", JsonValue.nullValue());
         answers.add(JsonValue.ofObject(a));
       }
@@ -216,6 +217,7 @@ public final class MockApiServer implements AutoCloseable {
     c.put("wind_speed", num(units.equals("imperial") ? 13.4 : 6.0));
     c.put("wind_direction", num(5));
     c.put("source", str("nowcast"));
+    c.put("measured", JsonValue.of(false));
     Map<String, JsonValue> body = new LinkedHashMap<>();
     body.put("location", load("forecast-metric").get("location").orElseThrow());
     body.put("alerts", JsonValue.ofArray(List.of()));
@@ -287,8 +289,30 @@ public final class MockApiServer implements AutoCloseable {
       } else {
         body = forecast(p, true);
       }
+    } else if (path.matches("/api/v1/locations/[^/]+/[^/]+/nearby")) {
+      body = load("nearby");
+    } else if (path.matches("/api/v1/locations/[^/]+/[^/]+/season")) {
+      body = load("season");
+    } else if (path.matches("/api/v1/locations/[^/]+/[^/]+/snow-trend")) {
+      body = load("snow-trend");
+    } else if (path.matches("/api/v1/locations/[^/]+/[^/]+/snowpack")) {
+      body = load("snowpack");
+    } else if (path.matches("/api/v1/locations/[^/]+/[^/]+/snowpack/plume")) {
+      body = load("snowpack-plume");
+    } else if (path.equals("/api/v1/nearby")) {
+      body = load("nearby-point");
+    } else if (path.equals("/api/v1/runs")) {
+      body = load("runs");
+    } else if (path.equals("/api/v1/explore")) {
+      body = load("explore");
+    } else if (path.equals("/api/v1/composition")) {
+      body = load("composition");
+    } else if (path.equals("/api/v1/alerts/outlines")) {
+      body = load("alert-outlines");
+    } else if (path.equals("/api/v1/avalanche/zones")) {
+      body = load("avalanche-zones");
     } else if (path.equals("/api/v1/search/locations")) {
-      body = load("search");
+      body = load(p.containsKey("sort") ? "search-sorted" : "search");
     } else if (path.equals("/api/v1/catalog/locations")) {
       body = load("c2".equals(p.get("cursor")) ? "catalog-page-2" : "catalog-page-1");
     } else if (seg.length == 5 && path.startsWith("/api/v1/catalog/locations/")) {

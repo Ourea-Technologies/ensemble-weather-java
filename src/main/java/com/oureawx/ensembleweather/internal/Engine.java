@@ -4,19 +4,19 @@ package com.oureawx.ensembleweather.internal;
 import com.oureawx.ensembleweather.AuthenticationException;
 import com.oureawx.ensembleweather.CachedResponse;
 import com.oureawx.ensembleweather.ConnectionException;
-import com.oureawx.ensembleweather.EnsembleWeatherException;
 import com.oureawx.ensembleweather.ErrorCategory;
 import com.oureawx.ensembleweather.InvalidRequestException;
 import com.oureawx.ensembleweather.NotFoundException;
+import com.oureawx.ensembleweather.OureaException;
 import com.oureawx.ensembleweather.OutsideCoverageException;
 import com.oureawx.ensembleweather.PermissionException;
 import com.oureawx.ensembleweather.RateLimitException;
 import com.oureawx.ensembleweather.ResponseCache;
 import com.oureawx.ensembleweather.UnavailableException;
-import com.oureawx.ensembleweather.model.JsonValue;
-import com.oureawx.ensembleweather.model.NearestLocation;
-import com.oureawx.ensembleweather.model.RateLimit;
-import com.oureawx.ensembleweather.model.ResponseMetadata;
+import com.oureawx.ensembleweather.types.JsonValue;
+import com.oureawx.ensembleweather.types.NearestLocation;
+import com.oureawx.ensembleweather.types.RateLimit;
+import com.oureawx.ensembleweather.types.ResponseMetadata;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -194,7 +194,7 @@ public final class Engine {
    * @param path the percent-encoded path, from {@code /api/v1}
    * @param query the canonical query string, possibly empty
    * @param openRoute whether the route needs no credentials (sent keyless unless configured)
-   * @return the result; fails with an {@link EnsembleWeatherException}
+   * @return the result; fails with an {@link OureaException}
    */
   public CompletableFuture<Result> get(
       String operationId, String path, String query, boolean openRoute) {
@@ -214,7 +214,7 @@ public final class Engine {
                 return CompletableFuture.completedFuture(result);
               }
               Duration delay = null;
-              EnsembleWeatherException error;
+              OureaException error;
               TransportResponse response = outcome.error;
               if (response != null) {
                 error = errorFor(response);
@@ -495,9 +495,9 @@ public final class Engine {
     return key == null || key.isEmpty() ? text : text.replace(key, "[redacted]");
   }
 
-  private EnsembleWeatherException connectionError(Throwable failure) {
-    if (failure instanceof EnsembleWeatherException) {
-      return (EnsembleWeatherException) failure;
+  private OureaException connectionError(Throwable failure) {
+    if (failure instanceof OureaException) {
+      return (OureaException) failure;
     }
     if (failure instanceof BodyTooLargeException) {
       return new UnavailableException(
@@ -524,7 +524,7 @@ public final class Engine {
    * @param response the error response
    * @return the exception
    */
-  EnsembleWeatherException errorFor(TransportResponse response) {
+  OureaException errorFor(TransportResponse response) {
     int status = response.status();
     String code = null;
     String message = null;
@@ -584,6 +584,7 @@ public final class Engine {
       m.put(c, ErrorCategory.AUTHENTICATION);
     }
     m.put("PRO_REQUIRED", ErrorCategory.PERMISSION);
+    m.put("PLUS_REQUIRED", ErrorCategory.PERMISSION);
     for (String c : new String[] {"LOCATION_NOT_FOUND", "NOT_FOUND"}) {
       m.put(c, ErrorCategory.NOT_FOUND);
     }

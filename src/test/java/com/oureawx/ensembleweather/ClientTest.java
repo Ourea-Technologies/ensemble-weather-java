@@ -11,14 +11,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.oureawx.ensembleweather.internal.BodyTooLargeException;
 import com.oureawx.ensembleweather.internal.TransportRequest;
-import com.oureawx.ensembleweather.model.Aggregation;
-import com.oureawx.ensembleweather.model.CatalogLocation;
-import com.oureawx.ensembleweather.model.ForecastResponse;
-import com.oureawx.ensembleweather.model.LocationSummary;
-import com.oureawx.ensembleweather.model.Percentile;
-import com.oureawx.ensembleweather.model.Quantiles;
-import com.oureawx.ensembleweather.model.UnitSystem;
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.Aggregation;
+import com.oureawx.ensembleweather.types.AvalancheZoneCollection;
+import com.oureawx.ensembleweather.types.CatalogLocation;
+import com.oureawx.ensembleweather.types.ExploreItem;
+import com.oureawx.ensembleweather.types.ExploreMetric;
+import com.oureawx.ensembleweather.types.ForecastResponse;
+import com.oureawx.ensembleweather.types.JsonValue;
+import com.oureawx.ensembleweather.types.LocationSummary;
+import com.oureawx.ensembleweather.types.Percentile;
+import com.oureawx.ensembleweather.types.Quantiles;
+import com.oureawx.ensembleweather.types.SnowpackResponse;
+import com.oureawx.ensembleweather.types.UnitSystem;
+import com.oureawx.ensembleweather.types.Variable;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
@@ -64,9 +69,9 @@ class ClientTest {
   void versionMatchesTheBuild() {
     String version = System.getProperty("ourea.project.version");
     if (version != null) {
-      assertEquals(version, EnsembleWeatherClient.VERSION);
+      assertEquals(version, Client.VERSION);
     }
-    assertEquals("0.1.0", EnsembleWeatherClient.VERSION);
+    assertEquals("0.1.0", Client.VERSION);
   }
 
   @Test
@@ -88,7 +93,7 @@ class ClientTest {
   void anonymousIgnoresTheEnvironmentKey() {
     TestClients t = new TestClients();
     t.transport.json(200, FORECAST);
-    EnsembleWeatherClient c = t.builder(Map.of("OUREA_API_KEY", "ow_env")).anonymous().build();
+    Client c = t.builder(Map.of("OUREA_API_KEY", "ow_env")).anonymous().build();
     assertFalse(c.hasApiKey());
     c.getForecast("or/mt-hood-meadows");
     assertNull(t.transport.sent.get(0).headers().get("X-API-Key"));
@@ -97,8 +102,8 @@ class ClientTest {
   @Test
   void theKeyNeverAppearsInToString() {
     TestClients t = new TestClients();
-    EnsembleWeatherClient.Builder b = t.builder().apiKey("ow_secret_1234");
-    EnsembleWeatherClient c = b.build();
+    Client.Builder b = t.builder().apiKey("ow_secret_1234");
+    Client c = b.build();
     for (String s :
         List.of(c.toString(), b.toString(), c.withApiKey("ow_secret_5678").toString())) {
       assertFalse(s.contains("ow_secret"), s);
@@ -128,7 +133,7 @@ class ClientTest {
   void asyncMethodsCompleteWithTheModelOrTheException() throws Exception {
     TestClients t = new TestClients();
     t.transport.json(200, FORECAST).json(404, body("error-not-found.json"));
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     CompletableFuture<ForecastResponse> ok =
         c.getForecastAsync(LocationId.parse("or/mt-hood-meadows"));
     assertEquals(Optional.of("mt-hood-meadows"), ok.get().location().slug());
@@ -226,7 +231,7 @@ class ClientTest {
         .json(403, "{\"error\":\"FORBIDDEN\",\"message\":\"x\"}")
         .json(400, "{\"error\":\"FEELS_LIKE_UNAVAILABLE\",\"message\":\"x\"}")
         .json(503, "{\"error\":\"AUTH_UNAVAILABLE\",\"message\":\"x\"}");
-    EnsembleWeatherClient c = t.builder().maxRetries(0).build();
+    Client c = t.builder().maxRetries(0).build();
     PermissionException p = assertThrows(PermissionException.class, () -> c.getForecast("or/x"));
     assertEquals(Optional.of("FORBIDDEN"), p.code());
     assertThrows(InvalidRequestException.class, () -> c.getForecast("or/x"));
@@ -247,7 +252,7 @@ class ClientTest {
   void aBodyThatIsNotTheContractIsUnavailable() {
     TestClients t = new TestClients();
     t.transport.json(200, "not json").json(200, "{\"location\":{}}");
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     assertThrows(UnavailableException.class, () -> c.getForecast("or/x"));
     UnavailableException e = assertThrows(UnavailableException.class, () -> c.getForecast("or/y"));
     assertTrue(e.getMessage().contains("$.location"), e.getMessage());
@@ -287,7 +292,7 @@ class ClientTest {
             "Cache-Control",
             "public, max-age=300"),
         body("search.json"));
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     c.searchLocations("hood");
     assertEquals(1, c.searchLocations("hood").count());
     assertEquals(1, t.transport.sent.size());
@@ -354,7 +359,7 @@ class ClientTest {
         .respond(200, h, FORECAST)
         .respond(200, h, FORECAST)
         .respond(200, h, body("search.json"));
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     c.getForecast("or/mt-hood-meadows");
     c.getForecast("or/mt-hood-meadows");
     c.searchLocations("hood");
@@ -366,7 +371,7 @@ class ClientTest {
   void aPresentProbabilityListMustAnswerEveryTerm() {
     TestClients t = new TestClients();
     t.transport.json(200, body("forecast-prob-snow.json")).json(200, FORECAST);
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     ForecastOptions o =
         ForecastOptions.builder()
             .probability(ProbabilityTerm.atLeast(Variable.SNOWFALL, Threshold.millimetres(99)))
@@ -422,7 +427,7 @@ class ClientTest {
   void pagingFollowsTheCursorLazilyAndStopsOnALoop() {
     TestClients t = new TestClients();
     t.transport.json(200, body("catalog-page-1.json")).json(200, body("catalog-page-2.json"));
-    EnsembleWeatherClient c = t.builder().build();
+    Client c = t.builder().build();
     PagedIterable<CatalogLocation> all = c.iterateCatalogLocations(CatalogLocationQuery.all());
     assertTrue(t.transport.sent.isEmpty(), "nothing is fetched before iteration");
     assertEquals(
@@ -469,7 +474,7 @@ class ClientTest {
   void clientUnitsApplyToEveryRequestAndOptionsOverrideThem() {
     TestClients t = new TestClients();
     t.transport.json(200, body("forecast-imperial.json")).json(200, FORECAST);
-    EnsembleWeatherClient c = t.builder().units(UnitSystem.IMPERIAL).build();
+    Client c = t.builder().units(UnitSystem.IMPERIAL).build();
     c.getForecast("or/mt-hood-meadows");
     c.getForecast("or/mt-hood-meadows", ForecastOptions.builder().units(UnitSystem.METRIC).build());
     assertEquals("units=imperial", t.transport.sent.get(0).uri().getRawQuery());
@@ -482,10 +487,89 @@ class ClientTest {
     t.transport
         .respond(200, Map.of("ETag", "\"a\""), FORECAST)
         .respond(304, Map.of("ETag", "\"a\""), "");
-    EnsembleWeatherClient a = t.builder().apiKey("ow_a").build();
+    Client a = t.builder().apiKey("ow_a").build();
     a.getForecast("or/mt-hood-meadows");
     ForecastResponse again = a.withApiKey("ow_a").getForecast("or/mt-hood-meadows");
     assertTrue(again.metadata().revalidated());
     assertSame(UnitSystem.METRIC, again.units());
+  }
+
+  @Test
+  void plusRequiredIsAPermissionError() {
+    TestClients t = new TestClients();
+    t.transport.json(403, "{\"error\":\"PLUS_REQUIRED\",\"message\":\"Plus or Pro\"}");
+    PermissionException e =
+        assertThrows(
+            PermissionException.class,
+            () -> t.builder().build().getSnowTrend(LocationId.of("or", "mt-hood-meadows")));
+    assertEquals(Optional.of("PLUS_REQUIRED"), e.code());
+  }
+
+  @Test
+  void membersTakesTrueFalseOrPlumeAndNothingElse() {
+    assertThrows(UsageException.class, () -> ForecastOptions.builder().members("full"));
+    TestClients t = new TestClients();
+    t.transport.json(200, body("forecast-plume.json")).json(200, FORECAST);
+    Client c = t.builder().build();
+    ForecastResponse plume =
+        c.getForecast("or/mt-hood-meadows", ForecastOptions.builder().membersPlume().build());
+    assertEquals("members=plume", t.transport.sent.get(0).uri().getRawQuery());
+    assertTrue(plume.series().plume().isPresent());
+    assertTrue(plume.series().timeseries().isEmpty());
+    c.getForecast("or/mt-hood-meadows", ForecastOptions.builder().members("false").build());
+    assertNull(t.transport.sent.get(1).uri().getRawQuery());
+  }
+
+  @Test
+  void nearAndBboxAreRangeCheckedBeforeSending() {
+    assertThrows(UsageException.class, () -> SearchOptions.builder().near(91, 0));
+    assertThrows(UsageException.class, () -> ExploreOptions.builder().near(45, -181));
+    assertThrows(UsageException.class, () -> ExploreOptions.builder().radiusKm(0));
+    assertThrows(UsageException.class, () -> SearchOptions.builder().radiusKm(1001));
+    assertThrows(
+        UsageException.class, () -> AlertOutlineOptions.builder().bbox(-116, 41, -125, 49));
+    assertThrows(
+        UsageException.class, () -> AlertOutlineOptions.builder().bbox(-125, 49, -116, 41));
+    assertThrows(
+        UsageException.class, () -> AlertOutlineOptions.builder().bbox(-125, -91, -116, 49));
+  }
+
+  @Test
+  void searchSendsTheClientUnitsAndExploreIteratesItsPages() {
+    TestClients t = new TestClients();
+    String explore = body("explore.json");
+    String last = explore.replaceAll("\"next_cursor\"\\s*:\\s*\"[^\"]*\"", "\"next_cursor\": null");
+    t.transport.json(200, body("search.json")).json(200, explore).json(200, last);
+    Client c = t.builder().units(UnitSystem.IMPERIAL).build();
+    c.searchLocations("hood");
+    assertEquals("q=hood&units=imperial", t.transport.sent.get(0).uri().getRawQuery());
+    int n = 0;
+    for (ExploreItem item : c.iterateExplore(ExploreMetric.SNOW_5D, ExploreOptions.defaults())) {
+      n++;
+      assertTrue(item.rank() > 0);
+    }
+    assertEquals(4, n);
+    assertEquals("metric=snow_5d&units=imperial", t.transport.sent.get(1).uri().getRawQuery());
+    assertTrue(t.transport.sent.get(2).uri().getRawQuery().startsWith("cursor="));
+  }
+
+  @Test
+  void geoJsonKeepsItsWireKeys() {
+    TestClients t = new TestClients();
+    t.transport.json(200, body("avalanche-zones.json"));
+    AvalancheZoneCollection zones = t.builder().build().getAvalancheZones();
+    JsonValue properties = zones.features().get(1).properties();
+    assertTrue(properties.get("forecast_url").isPresent());
+    assertTrue(properties.get("danger_level").isPresent());
+    assertFalse(properties.get("url").isPresent());
+    assertEquals(JsonValue.Kind.ARRAY, zones.features().get(1).geometry().coordinates().kind());
+  }
+
+  @Test
+  void snowpackDefinitionsKeepTheirCodesAsKeys() {
+    TestClients t = new TestClients();
+    t.transport.json(200, body("snowpack.json"));
+    SnowpackResponse s = t.builder().build().getSnowpack(LocationId.of("or", "mt-hood-meadows"));
+    assertTrue(s.definitions().surface().containsKey("ice_crust"), s.definitions().toString());
   }
 }

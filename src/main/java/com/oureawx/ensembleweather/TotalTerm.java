@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-2-Clause
 package com.oureawx.ensembleweather;
 
-import com.oureawx.ensembleweather.model.Variable;
+import com.oureawx.ensembleweather.types.Variable;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 

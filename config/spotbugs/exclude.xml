@@ -5,7 +5,7 @@
   <!-- Every model field is immutable (List.copyOf lists, JsonValue, java.time types,
        strings); SpotBugs cannot see that JsonValue is immutable. -->
   <Match>
-    <Package name="com.oureawx.ensembleweather.model"/>
+    <Package name="com.oureawx.ensembleweather.types"/>
     <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
   </Match>
   <!-- The internal transport passes body arrays along without copying them on purpose
@@ -19,12 +19,12 @@
     <Bug pattern="MS_EXPOSE_REP"/>
     <Or>
       <Class name="~com\.oureawx\.ensembleweather\.\w+(Options|Query)"/>
-      <Class name="com.oureawx.ensembleweather.model.JsonValue"/>
+      <Class name="com.oureawx.ensembleweather.types.JsonValue"/>
     </Or>
   </Match>
   <!-- Retry jitter is not a security use of randomness. -->
   <Match>
-    <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient$Builder"/>
+    <Class name="com.oureawx.ensembleweather.Client$Builder"/>
     <Bug pattern="PREDICTABLE_RANDOM"/>
   </Match>
   <!-- Case folding with Locale.ROOT of ASCII protocol tokens (URL schemes and hosts,
@@ -32,14 +32,14 @@
   <Match>
     <Or>
       <Class name="com.oureawx.ensembleweather.internal.Engine"/>
-      <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient$Builder"/>
-      <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient"/>
+      <Class name="com.oureawx.ensembleweather.Client$Builder"/>
+      <Class name="com.oureawx.ensembleweather.Client"/>
     </Or>
     <Bug pattern="IMPROPER_UNICODE"/>
   </Match>
   <!-- The blocking methods rethrow the async call's own unchecked exception unchanged. -->
   <Match>
-    <Class name="com.oureawx.ensembleweather.EnsembleWeatherClient"/>
+    <Class name="com.oureawx.ensembleweather.Client"/>
     <Method name="join"/>
     <Bug pattern="THROWS_METHOD_THROWS_RUNTIMEEXCEPTION"/>
   </Match>

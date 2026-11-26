@@ -2,14 +2,14 @@
 package com.oureawx.ensembleweather;
 
 import com.oureawx.ensembleweather.internal.Query;
-import com.oureawx.ensembleweather.model.LocationType;
-import com.oureawx.ensembleweather.model.UnitSystem;
+import com.oureawx.ensembleweather.types.LocationType;
+import com.oureawx.ensembleweather.types.UnitSystem;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Filters and paging for {@link EnsembleWeatherClient#listLocations(LocationListOptions)}: the
- * slug-ordered location list, one page at a time.
+ * Filters and paging for {@link Client#listLocations(LocationListOptions)}: the slug-ordered
+ * location list, one page at a time.
  */
 public final class LocationListOptions {
   private static final LocationListOptions DEFAULTS = builder().build();

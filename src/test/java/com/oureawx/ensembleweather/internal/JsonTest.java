@@ -4,7 +4,7 @@ package com.oureawx.ensembleweather.internal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.oureawx.ensembleweather.model.JsonValue;
+import com.oureawx.ensembleweather.types.JsonValue;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 

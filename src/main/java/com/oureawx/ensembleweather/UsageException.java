@@ -6,7 +6,7 @@ package com.oureawx.ensembleweather;
  * precipitation), a threshold unit that does not fit its variable, an unserved quantile pair, or a
  * malformed location or option.
  */
-public final class UsageException extends EnsembleWeatherException {
+public final class UsageException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**

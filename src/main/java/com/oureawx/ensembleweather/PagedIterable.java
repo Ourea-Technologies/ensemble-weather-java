@@ -14,8 +14,8 @@ import org.jspecify.annotations.Nullable;
  * Every item of a cursor-paged list, fetched lazily: the first page is requested when iteration
  * starts, and each next page only when the previous one is used up, until {@code next_cursor} is
  * absent. Iterate it, or {@link #stream()} it and stop early with {@code limit}; each iteration
- * starts again from the first page. A failed page throws its {@link EnsembleWeatherException} from
- * {@code hasNext()}.
+ * starts again from the first page. A failed page throws its {@link OureaException} from {@code
+ * hasNext()}.
  *
  * <pre>{@code
  * for (CatalogLocation location : client.iterateCatalogLocations(CatalogLocationQuery.all())) {

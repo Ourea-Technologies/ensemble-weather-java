@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
  * The API key is not valid ({@code INVALID_API_KEY}, {@code UNAUTHORIZED}, HTTP 401). Not retried:
  * check the key, or send none for anonymous Free access.
  */
-public final class AuthenticationException extends EnsembleWeatherException {
+public final class AuthenticationException extends OureaException {
   private static final long serialVersionUID = 1L;
 
   /**
