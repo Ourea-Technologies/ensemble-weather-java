@@ -66,6 +66,17 @@ dependencies {
   spotbugsPlugins(libs.findsecbugs)
 }
 
+// Error Prone and google-java-format bring Guava onto the build-tool classpaths; pin a release
+// without GHSA-xxph-c9ww-hj94 (build tooling only, never a runtime dependency).
+configurations.configureEach {
+  resolutionStrategy.eachDependency {
+    if (requested.group == "com.google.guava" && requested.name == "guava") {
+      useVersion("33.7.2-jre")
+      because("GHSA-xxph-c9ww-hj94")
+    }
+  }
+}
+
 spotbugs { toolVersion = libs.versions.spotbugs.get() }
 
 val strictLint = listOf("-Xlint:all", "-Werror")
